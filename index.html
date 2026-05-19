@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory QC Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0b0f;
+      --surface: #111318;
+      --surface2: #1a1d26;
+      --border: #22263a;
+      --accent: #4f6ef7;
+      --accent2: #e8494a;
+      --accent3: #f7c94f;
+      --accent4: #49e8a0;
+      --text: #e8eaf2;
+      --text-muted: #6b7080;
+      --text-dim: #9095a8;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(79,110,247,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,110,247,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    #last-updated {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Loading state */
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      gap: 16px;
+    }
+
+    .loader {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    #error-msg {
+      display: none;
+      background: rgba(232,73,74,0.1);
+      border: 1px solid rgba(232,73,74,0.3);
+      border-radius: 12px;
+      padding: 20px 24px;
+      color: var(--accent2);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin: 24px 0;
+    }
+
+    #dashboard { display: none; }
+
+    /* KPI row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .kpi-card:hover { border-color: var(--accent); }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--accent));
+      border-radius: 16px 16px 0 0;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-display);
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Section headers */
+    .section {
+      margin-bottom: 36px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .section-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      background: rgba(79,110,247,0.1);
+      border: 1px solid rgba(79,110,247,0.2);
+      padding: 2px 10px;
+      border-radius: 100px;
+    }
+
+    /* Bucket cards */
+    .buckets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .bucket-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bucket-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: var(--fill-pct, 0%);
+      background: var(--bucket-color, rgba(79,110,247,0.08));
+      transition: height 0.8s cubic-bezier(0.4,0,0.2,1);
+      z-index: 0;
+    }
+
+    .bucket-card > * { position: relative; z-index: 1; }
+
+    .bucket-range {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .bucket-count {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .bucket-pct {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: var(--font-mono);
+    }
+
+    /* Table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    th:first-child { padding-left: 24px; }
+    th:last-child { padding-right: 24px; text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    td {
+      padding: 14px 16px;
+      color: var(--text-dim);
+    }
+
+    td:first-child {
+      padding-left: 24px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    td:last-child { padding-right: 24px; text-align: right; }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-right: 10px;
+    }
+
+    .rank-badge.top3 {
+      background: rgba(79,110,247,0.15);
+      border-color: rgba(79,110,247,0.3);
+      color: var(--accent);
+    }
+
+    .count-chip {
+      display: inline-block;
+      padding: 3px 10px;
+      background: rgba(79,110,247,0.08);
+      border: 1px solid rgba(79,110,247,0.15);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    .bucket-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .bucket-bar-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-bar {
+      flex: 1;
+      max-width: 80px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .total-row td {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 500;
+      border-top: 2px solid var(--border);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      margin-top: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 20px; }
+      .kpi-value { font-size: 32px; }
+      .buckets-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">QC</div>
+        <div>
+          <h1>Inventory QC Dashboard</h1>
+          <div class="subtitle">SPYNE · INVENTORY DETAILS</div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span id="data-status">Loading…</span>
+        </div>
+        <div id="last-updated"></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="loading">
+    <div class="loader"></div>
+    <div class="loading-text">Fetching inventory data…</div>
+  </div>
+
+  <div id="error-msg"></div>
+
+  <div id="dashboard">
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card" style="--card-accent: var(--accent2)">
+        <div class="kpi-label">QC Pending (Total)</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">Items awaiting quality check</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: var(--accent3)">
+        <div class="kpi-label">Within 24 hrs</div>
+        <div class="kpi-value" id="kpi-within24">—</div>
+        <div class="kpi-sub">Received in last 24 hours</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: var(--accent4)">
+        <div class="kpi-label">Beyond 24 hrs</div>
+        <div class="kpi-value" id="kpi-beyond24">—</div>
+        <div class="kpi-sub">Overdue for QC</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: var(--accent)">
+        <div class="kpi-label">Enterprises Affected</div>
+        <div class="kpi-value" id="kpi-enterprises">—</div>
+        <div class="kpi-sub">Unique enterprise count</div>
+      </div>
+    </div>
+
+    <!-- Hourly Buckets -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-label">Hourly Buckets — QC Pending</div>
+        <div class="section-badge">ALL TYPES</div>
+      </div>
+      <div class="buckets-grid" id="buckets-overall"></div>
+    </div>
+
+    <!-- Top 10 Enterprises Table -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-label">Top 10 Enterprises — QC Pending</div>
+        <div class="section-badge">BY VOLUME</div>
+      </div>
+      <div class="table-wrap">
+        <table id="enterprise-table">
+          <thead>
+            <tr>
+              <th>#&nbsp;&nbsp;Enterprise</th>
+              <th>0–4 hrs</th>
+              <th>5–8 hrs</th>
+              <th>9–12 hrs</th>
+              <th>13–24 hrs</th>
+              <th>24+ hrs</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="enterprise-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-note">Source: Metabase · Inventory Details · QC Pending only</div>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </footer>
+</div>
+
+<script>
+  // Use /api/proxy to avoid CORS issues on Vercel; falls back to direct URL in local dev
+  const CSV_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'https://metabase.spyne.ai/public/question/15e908e4-fe21-4982-9d8c-4aff07f2c948.csv'
+    : '/api/proxy';
+
+  const BUCKET_DEFS = [
+    { label: '0–4 hrs',   key: 'b0_4',   min: 0,  max: 4,   color: 'rgba(79,110,247,0.12)' },
+    { label: '5–8 hrs',   key: 'b5_8',   min: 5,  max: 8,   color: 'rgba(248,196,78,0.10)' },
+    { label: '9–12 hrs',  key: 'b9_12',  min: 9,  max: 12,  color: 'rgba(249,115,116,0.10)' },
+    { label: '13–24 hrs', key: 'b13_24', min: 13, max: 24,  color: 'rgba(73,232,160,0.10)' },
+    { label: '24+ hrs',   key: 'b24p',   min: 25, max: Infinity, color: 'rgba(232,73,74,0.12)' },
+  ];
+
+  function getBucket(hrs) {
+    for (const b of BUCKET_DEFS) {
+      if (hrs >= b.min && hrs <= b.max) return b.key;
+    }
+    return null;
+  }
+
+  function getHours(row) {
+    // Prefer after_24_hrs field; fall back to sentAt/receivedAt diff
+    const after = (row['after_24_hrs'] || '').toString().toLowerCase();
+    if (after === 'true' || after === '1' || after === 'yes') return 25;
+
+    // Try to compute from receivedAt
+    const recv = row['receivedAt'] || row['receivedat'] || row['received_at'];
+    if (recv) {
+      const diffMs = Date.now() - new Date(recv).getTime();
+      const diffH = diffMs / 3600000;
+      if (!isNaN(diffH) && diffH >= 0) return diffH;
+    }
+    return null;
+  }
+
+  function makeBucketObj() {
+    return { b0_4: 0, b5_8: 0, b9_12: 0, b13_24: 0, b24p: 0, total: 0 };
+  }
+
+  function bucketRow(row, obj) {
+    const hrs = getHours(row);
+    if (hrs === null) return;
+    const bKey = getBucket(hrs);
+    if (bKey) { obj[bKey]++; obj.total++; }
+  }
+
+  function renderBuckets(containerId, bucketObj, maxVal) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    BUCKET_DEFS.forEach(b => {
+      const count = bucketObj[b.key] || 0;
+      const pct = maxVal > 0 ? Math.round((count / maxVal) * 100) : 0;
+      const card = document.createElement('div');
+      card.className = 'bucket-card';
+      card.style.setProperty('--bucket-color', b.color);
+      setTimeout(() => card.style.setProperty('--fill-pct', pct + '%'), 100);
+      card.innerHTML = `
+        <div class="bucket-range">${b.label}</div>
+        <div class="bucket-count">${count.toLocaleString()}</div>
+        <div class="bucket-pct">${pct}% of total</div>
+      `;
+      el.appendChild(card);
+    });
+  }
+
+  function renderEnterpriseTable(top10, grandMax) {
+    const tbody = document.getElementById('enterprise-tbody');
+    tbody.innerHTML = '';
+    top10.forEach((ent, i) => {
+      const rank = i + 1;
+      const isTop3 = rank <= 3;
+      const pct = grandMax > 0 ? (ent.total / grandMax * 100) : 0;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span class="rank-badge ${isTop3 ? 'top3' : ''}">${rank}</span>
+          ${ent.name}
+        </td>
+        ${BUCKET_DEFS.map(b => `
+          <td>
+            <div class="bucket-bar-cell">
+              <span class="bucket-num">${(ent[b.key] || 0).toLocaleString()}</span>
+              <div class="mini-bar"><div class="mini-bar-fill" style="width:${ent.total > 0 ? ((ent[b.key]||0)/ent.total*100) : 0}%"></div></div>
+            </div>
+          </td>
+        `).join('')}
+        <td><span class="count-chip">${ent.total.toLocaleString()}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Total row
+    const totals = makeBucketObj();
+    top10.forEach(e => {
+      BUCKET_DEFS.forEach(b => { totals[b.key] = (totals[b.key]||0) + (e[b.key]||0); });
+      totals.total += e.total;
+    });
+    const trTot = document.createElement('tr');
+    trTot.className = 'total-row';
+    trTot.innerHTML = `
+      <td><strong>Top 10 Subtotal</strong></td>
+      ${BUCKET_DEFS.map(b => `<td><span class="bucket-num">${(totals[b.key]||0).toLocaleString()}</span></td>`).join('')}
+      <td><span class="count-chip">${totals.total.toLocaleString()}</span></td>
+    `;
+    tbody.appendChild(trTot);
+  }
+
+  function processData(rows) {
+    // Filter QC Pending
+    const qcRows = rows.filter(r => {
+      const rb = (r['reason_bucket'] || r['reason bucket'] || '').trim().toLowerCase();
+      return rb === 'qc pending';
+    });
+
+    // Overall KPIs
+    const total = qcRows.length;
+    const beyond24 = qcRows.filter(r => {
+      const hrs = getHours(r);
+      return hrs !== null && hrs > 24;
+    }).length;
+    const within24 = total - beyond24;
+
+    const enterprises = new Set(qcRows.map(r => r['enterpriseId'] || r['enterpriseid'] || r['enterprise_id'] || '')).size;
+
+    document.getElementById('kpi-total').textContent = total.toLocaleString();
+    document.getElementById('kpi-within24').textContent = within24.toLocaleString();
+    document.getElementById('kpi-beyond24').textContent = beyond24.toLocaleString();
+    document.getElementById('kpi-enterprises').textContent = enterprises.toLocaleString();
+
+    // Overall buckets
+    const overall = makeBucketObj();
+    qcRows.forEach(r => bucketRow(r, overall));
+    renderBuckets('buckets-overall', overall, overall.total || 1);
+
+    // Enterprise bucketing
+    const entMap = {};
+    qcRows.forEach(r => {
+      const eid = (r['enterpriseId'] || r['enterpriseid'] || r['enterprise_id'] || 'Unknown').toString();
+      if (!entMap[eid]) entMap[eid] = { name: eid, ...makeBucketObj() };
+      bucketRow(r, entMap[eid]);
+    });
+
+    const sorted = Object.values(entMap)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+
+    const grandMax = sorted[0]?.total || 1;
+    renderEnterpriseTable(sorted, grandMax);
+
+    // Update status
+    document.getElementById('data-status').textContent = `${total.toLocaleString()} QC Pending`;
+    document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  }
+
+  function showError(msg) {
+    document.getElementById('loading').style.display = 'none';
+    const el = document.getElementById('error-msg');
+    el.style.display = 'block';
+    el.textContent = '⚠ ' + msg;
+  }
+
+  function loadData() {
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('data-status').textContent = 'Loading…';
+
+    Papa.parse(CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (!results.data || results.data.length === 0) {
+          showError('No data returned from the CSV endpoint. Check the URL or CORS settings.');
+          return;
+        }
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        processData(results.data);
+      },
+      error: (err) => {
+        showError(`Failed to load CSV: ${err.message}. The Metabase endpoint may require authentication or CORS headers.`);
+      }
+    });
+  }
+
+  loadData();
+</script>
+</body>
+</html>
