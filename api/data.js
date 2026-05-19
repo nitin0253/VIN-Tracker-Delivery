@@ -1,83 +1,82 @@
+// api/data.js — lean, fast, server-side cached
 let cache = null;
 let lastFetch = 0;
-const CACHE_TIME = 5 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000;
 
 const METABASE_URL =
   "https://metabase.spyne.ai/public/question/e45c301d-aa55-4df8-a804-51ec721b6f26.csv";
 
-function parseCSVRow(row) {
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = splitCSVRow(lines[0]);
   const out = [];
-  let cur = "", inQuotes = false;
-  for (let i = 0; i < row.length; i++) {
-    const ch = row[i];
-    if (ch === '"') {
-      if (inQuotes && row[i + 1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) { out.push(cur); cur = ''; }
-    else cur += ch;
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = splitCSVRow(lines[i]);
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = (vals[j] ?? '').trim(); });
+    out.push(obj);
   }
-  out.push(cur);
   return out;
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (!lines.length) return [];
-  const headers = parseCSVRow(lines[0]).map(h => h.trim());
-  return lines.slice(1).filter(l => l.trim()).map(line => {
-    const vals = parseCSVRow(line);
-    const obj = {};
-    headers.forEach((h, i) => (obj[h] = (vals[i] ?? '').trim()));
-    return obj;
-  });
+function splitCSVRow(row) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < row.length; i++) {
+    const c = row[i];
+    if (c === '"') { if (q && row[i+1] === '"') { cur += '"'; i++; } else q = !q; }
+    else if (c === ',' && !q) { out.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
 }
 
-function pickField(r, names) {
-  for (const n of names) if (r[n] != null && String(r[n]).trim() !== '') return r[n];
+function pick(r, ...names) {
+  for (const n of names) { const v = r[n]; if (v != null && String(v).trim()) return String(v).trim(); }
   return '';
 }
 
-async function loadRows() {
-  if (cache && Date.now() - lastFetch < CACHE_TIME) return cache;
+// Pre-aggregate on server: returns summary + slim rows (only fields needed client-side)
+async function buildCache() {
+  if (cache && Date.now() - lastFetch < CACHE_TTL) return cache;
+
   const resp = await fetch(METABASE_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-  if (!resp.ok) throw new Error(`Metabase responded ${resp.status}`);
-  const text = await resp.text();
-  const rows = parseCSV(text);
+  if (!resp.ok) throw new Error(`Metabase ${resp.status}`);
+  const raw = parseCSV(await resp.text());
 
-  if (rows.length > 0) {
-    console.log('[data.js] cols:', Object.keys(rows[0]).join(', '));
-    console.log('[data.js] rows:', rows.length);
-  }
+  const cols = raw.length ? Object.keys(raw[0]) : [];
 
-  cache = rows.map(r => ({
-    dealerVinId:     pickField(r, ['dealerVinId','dealer_vin_id','DealerVinId']),
-    enterpriseId:    pickField(r, ['enterpriseId','enterprise_id','EnterpriseId']),
-    teamId:          pickField(r, ['teamId','team_id']),
-    vinName:         pickField(r, ['vinName','vin_name','VinName','vin']),
-    make:            pickField(r, ['make','Make']),
-    model:           pickField(r, ['model','Model']),
-    year:            pickField(r, ['year','Year']),
-    trim:            pickField(r, ['trim','Trim']),
-    stockNumber:     pickField(r, ['stockNumber','stock_number']),
-    sellingPrice:    pickField(r, ['sellingPrice','selling_price']),
-    platform:        pickField(r, ['platform','Platform']),
-    imageCount:      pickField(r, ['image_count','imageCount']),
-    outputImageCount:pickField(r, ['output_image_count','outputImageCount']),
-    videoCount:      pickField(r, ['video_count','videoCount']),
-    overallStatus:   pickField(r, ['status_overallStatus','overallStatus','overall_status','status']),
-    vinCreation:     pickField(r, ['vinCreation','vin_creation','created_at']),
-    receivedAt:      pickField(r, ['receivedAt','received_at']),
-    sentAt:          pickField(r, ['sentAt','sent_at']),
-    hasPhotos:       pickField(r, ['has_photos','hasPhotos']),
-    status:          pickField(r, ['status','Status']),
-    after24hrs:      pickField(r, ['after_24_hrs','after24hrs','after_24hrs']),
-    reasonBucket:    pickField(r, ['reason_bucket','reasonBucket','reason bucket']),
-    holdReason:      pickField(r, ['hold_reason','holdReason']),
-    thumbnailUrl:    pickField(r, ['thumbnail_url','thumbnailUrl']),
-    vdpUrl:          pickField(r, ['vdp_url','vdpUrl']),
-    vinScore:        pickField(r, ['vin_score','vinScore']),
+  // Map to slim rows — only what the dashboard needs
+  const rows = raw.map(r => ({
+    eid:    pick(r, 'enterpriseId','enterprise_id','EnterpriseId'),
+    vin:    pick(r, 'vinName','vin_name','VinName','vin'),
+    rb:     pick(r, 'reason_bucket','reasonBucket','reason bucket'),  // reason_bucket
+    type:   pick(r, 'platform','Platform','type','Type'),              // "type" = platform
+    a24:    pick(r, 'after_24_hrs','after24hrs'),
+    recv:   pick(r, 'receivedAt','received_at'),
+    sent:   pick(r, 'sentAt','sent_at'),
+    vc:     pick(r, 'vinCreation','vin_creation'),
   }));
 
+  // Pre-compute hours for every row once
+  const now = Date.now();
+  const withHrs = rows.map(r => {
+    let hrs = null;
+    const a = r.a24.toLowerCase();
+    if (a === 'true' || a === '1' || a === 'yes') { hrs = 25; }
+    else {
+      for (const ts of [r.recv, r.sent, r.vc]) {
+        if (!ts) continue;
+        const d = new Date(ts);
+        if (!isNaN(d)) { const h = (now - d) / 3600000; if (h >= 0) { hrs = h; break; } }
+      }
+    }
+    return { ...r, hrs };
+  });
+
+  cache = { rows: withHrs, cols, total: withHrs.length, lastSynced: Date.now() };
   lastFetch = Date.now();
   return cache;
 }
@@ -85,26 +84,30 @@ async function loadRows() {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
   try {
     if (req.query.force === '1') { cache = null; lastFetch = 0; }
-    const rows = await loadRows();
+    const data = await buildCache();
 
     if (req.query.debug === '1') {
+      const uniqRB = [...new Set(data.rows.map(r => r.rb).filter(Boolean))];
+      const uniqType = [...new Set(data.rows.map(r => r.type).filter(Boolean))];
       return res.status(200).json({
-        count: rows.length,
-        sample: rows.slice(0, 2),
-        uniqueReasonBuckets: [...new Set(rows.map(r => r.reasonBucket).filter(Boolean))],
+        totalRows: data.total, cols: data.cols,
+        sampleRow: data.rows[0],
+        uniqueReasonBuckets: uniqRB,
+        uniqueTypes: uniqType,
       });
     }
 
+    // Send slim rows — hours already computed
     res.status(200).json({
-      rows,
-      count: rows.length,
-      lastSynced: new Date(lastFetch).toISOString(),
+      rows: data.rows,
+      total: data.total,
+      lastSynced: new Date(data.lastSynced).toISOString(),
     });
   } catch (err) {
-    console.error('[data.js]', err);
     res.status(500).json({ error: err.message });
   }
 }
