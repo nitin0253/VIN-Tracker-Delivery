@@ -1,844 +1,566 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inventory QC Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0a0b0f;
-      --surface: #111318;
-      --surface2: #1a1d26;
-      --border: #22263a;
-      --accent: #4f6ef7;
-      --accent2: #e8494a;
-      --accent3: #f7c94f;
-      --accent4: #49e8a0;
-      --text: #e8eaf2;
-      --text-muted: #6b7080;
-      --text-dim: #9095a8;
-      --font-display: 'Syne', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-      --font-mono: 'DM Mono', monospace;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inventory QC — Spyne</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── Reset & Tokens ──────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+[data-theme="dark"]{
+  --bg:#0d0f14;
+  --bg2:#131620;
+  --surface:#181b24;
+  --surface2:#1f2330;
+  --border:#272c3d;
+  --border2:#313650;
+  --text:#eef0f8;
+  --text2:#9ea6c0;
+  --text3:#5a6180;
+  --accent:#4e7cff;
+  --accent-glow:rgba(78,124,255,.18);
+  --red:#ff5b5b;
+  --amber:#ffb03a;
+  --green:#36d99a;
+  --purple:#a78bfa;
+  --card-shadow:0 2px 16px rgba(0,0,0,.45);
+}
+[data-theme="light"]{
+  --bg:#f0f2f8;
+  --bg2:#e8eaf2;
+  --surface:#ffffff;
+  --surface2:#f4f5fb;
+  --border:#dde0ec;
+  --border2:#c8ccde;
+  --text:#0d1120;
+  --text2:#4a5270;
+  --text3:#8b90aa;
+  --accent:#3a66f0;
+  --accent-glow:rgba(58,102,240,.12);
+  --red:#e03e3e;
+  --amber:#d4820a;
+  --green:#12a36e;
+  --purple:#7c3aed;
+  --card-shadow:0 2px 16px rgba(0,0,0,.08);
+}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s}
+a{color:inherit}
+button{font-family:'Outfit',sans-serif;cursor:pointer}
 
-    /* Background grid */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(79,110,247,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(79,110,247,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
+/* ── Layout ──────────────────────────────────────────────────────── */
+.wrap{max-width:1400px;margin:0 auto;padding:0 28px 60px}
 
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
-    }
+/* ── Header ──────────────────────────────────────────────────────── */
+.header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:32px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;background:var(--accent);border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;letter-spacing:-1px;flex-shrink:0}
+.brand-name{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.brand-sub{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:1px;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text3)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:all .18s}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.88;background:var(--accent)}
+.btn svg{flex-shrink:0}
 
-    /* Header */
-    header {
-      padding: 32px 0 24px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 40px;
-    }
+/* ── Loading ─────────────────────────────────────────────────────── */
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:18px}
+.spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--text3)}
 
-    .header-inner {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+/* ── Error / Warn banner ─────────────────────────────────────────── */
+.banner{display:none;border-radius:12px;padding:18px 22px;font-size:13px;font-family:'JetBrains Mono',monospace;line-height:1.7;margin-bottom:24px}
+.banner.warn{background:rgba(255,176,58,.07);border:1px solid rgba(255,176,58,.25);color:var(--amber)}
+.banner.err{background:rgba(255,91,91,.08);border:1px solid rgba(255,91,91,.25);color:var(--red)}
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+/* ── Section ─────────────────────────────────────────────────────── */
+.section{margin-bottom:36px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.section-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
+.badge{font-size:10px;font-family:'JetBrains Mono',monospace;padding:3px 9px;border-radius:100px;background:var(--accent-glow);border:1px solid rgba(78,124,255,.25);color:var(--accent)}
+.dl-btns{display:flex;gap:6px}
+.dl-btn{padding:5px 11px;border-radius:7px;font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--surface2);border:1px solid var(--border);color:var(--text3);transition:all .15s}
+.dl-btn:hover{border-color:var(--accent);color:var(--accent)}
 
-    .brand-logo {
-      width: 36px;
-      height: 36px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 16px;
-      color: #fff;
-    }
+/* ── KPI grid ────────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s;box-shadow:var(--card-shadow)}
+.kpi:hover{border-color:var(--border2);box-shadow:0 4px 24px rgba(0,0,0,.35)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--accent));border-radius:14px 14px 0 0}
+.kpi-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.kpi-val{font-size:36px;font-weight:800;line-height:1;letter-spacing:-1px}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:6px}
 
-    h1 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--text);
-    }
+/* Reason bucket cards row */
+.rb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:36px}
+.rb-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .2s;box-shadow:var(--card-shadow)}
+.rb-card:hover,.rb-card.active{border-color:var(--accent);background:var(--accent-glow)}
+.rb-card.active .rb-val{color:var(--accent)}
+.rb-name{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.rb-val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.rb-pct{font-size:11px;color:var(--text3);margin-top:4px}
 
-    .subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
+/* ── Bucket bar cards ────────────────────────────────────────────── */
+.bucket-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 14px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.bcard:hover{border-color:var(--border2)}
+.bcard-fill{position:absolute;bottom:0;left:0;right:0;height:var(--pct,0%);background:var(--fill,rgba(78,124,255,.07));transition:height .9s cubic-bezier(.4,0,.2,1);z-index:0}
+.bcard>*{position:relative;z-index:1}
+.bcard-range{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-bottom:8px}
+.bcard-n{font-size:26px;font-weight:800;letter-spacing:-1px}
+.bcard-pct{font-size:11px;color:var(--text3);margin-top:4px}
 
-    .header-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+/* ── Table ───────────────────────────────────────────────────────── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)}
+.table-scroll{max-height:420px;overflow-y:auto}
+.table-scroll::-webkit-scrollbar{width:5px}
+.table-scroll::-webkit-scrollbar-track{background:transparent}
+.table-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{position:sticky;top:0;z-index:2}
+thead tr{background:var(--surface2);border-bottom:1px solid var(--border)}
+th{padding:12px 16px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+th:first-child{padding-left:20px}
+th:last-child{padding-right:20px;text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td{padding:12px 16px;color:var(--text2)}
+td:first-child{padding-left:20px;color:var(--text);font-weight:500}
+td:last-child{padding-right:20px;text-align:right}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text3);margin-right:8px;flex-shrink:0}
+.rank.hi{background:rgba(78,124,255,.12);border-color:rgba(78,124,255,.3);color:var(--accent)}
+.chip{display:inline-block;padding:3px 10px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--accent-glow);border:1px solid rgba(78,124,255,.2);color:var(--accent)}
+.mini-bar-wrap{display:flex;align-items:center;gap:7px}
+.mini-bar{flex:1;max-width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;background:var(--accent);border-radius:2px}
+.foot-row td{background:var(--surface2);font-weight:600;color:var(--text)}
 
-    .status-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      color: var(--text-dim);
-    }
+/* ── Theme toggle & bottom-left controls ─────────────────────────── */
+.bottom-left{position:fixed;bottom:24px;left:24px;display:flex;flex-direction:column;gap:8px;z-index:100}
+.theme-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:17px;display:grid;place-items:center;box-shadow:var(--card-shadow);transition:all .2s}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent4);
-      animation: pulse 2s ease-in-out infinite;
-    }
+/* ── Upload fallback ─────────────────────────────────────────────── */
+#upload-fallback{display:none;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:32px}
+.upload-title{font-size:15px;font-weight:700;margin-bottom:8px}
+.upload-msg{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.upload-actions{display:flex;gap:12px;flex-wrap:wrap}
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    #last-updated {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-
-    /* Loading state */
-    #loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 400px;
-      gap: 16px;
-    }
-
-    .loader {
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-text {
-      font-family: var(--font-mono);
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    #error-msg {
-      display: none;
-      background: rgba(232,73,74,0.1);
-      border: 1px solid rgba(232,73,74,0.3);
-      border-radius: 12px;
-      padding: 20px 24px;
-      color: var(--accent2);
-      font-family: var(--font-mono);
-      font-size: 13px;
-      margin: 24px 0;
-    }
-
-    #dashboard { display: none; }
-
-    /* KPI row */
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-
-    .kpi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-
-    .kpi-card:hover { border-color: var(--accent); }
-
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--card-accent, var(--accent));
-      border-radius: 16px 16px 0 0;
-    }
-
-    .kpi-label {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
-
-    .kpi-value {
-      font-family: var(--font-display);
-      font-size: 42px;
-      font-weight: 800;
-      line-height: 1;
-      color: var(--text);
-      letter-spacing: -1px;
-    }
-
-    .kpi-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 8px;
-    }
-
-    /* Section headers */
-    .section {
-      margin-bottom: 36px;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .section-label {
-      font-family: var(--font-display);
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .section-badge {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--accent);
-      background: rgba(79,110,247,0.1);
-      border: 1px solid rgba(79,110,247,0.2);
-      padding: 2px 10px;
-      border-radius: 100px;
-    }
-
-    /* Bucket cards */
-    .buckets-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-    }
-
-    .bucket-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .bucket-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: var(--fill-pct, 0%);
-      background: var(--bucket-color, rgba(79,110,247,0.08));
-      transition: height 0.8s cubic-bezier(0.4,0,0.2,1);
-      z-index: 0;
-    }
-
-    .bucket-card > * { position: relative; z-index: 1; }
-
-    .bucket-range {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .bucket-count {
-      font-family: var(--font-display);
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .bucket-pct {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 6px;
-      font-family: var(--font-mono);
-    }
-
-    /* Table */
-    .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    thead tr {
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-    }
-
-    th {
-      padding: 14px 16px;
-      text-align: left;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      white-space: nowrap;
-    }
-
-    th:first-child { padding-left: 24px; }
-    th:last-child { padding-right: 24px; text-align: right; }
-
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--surface2); }
-
-    td {
-      padding: 14px 16px;
-      color: var(--text-dim);
-    }
-
-    td:first-child {
-      padding-left: 24px;
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    td:last-child { padding-right: 24px; text-align: right; }
-
-    .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-right: 10px;
-    }
-
-    .rank-badge.top3 {
-      background: rgba(79,110,247,0.15);
-      border-color: rgba(79,110,247,0.3);
-      color: var(--accent);
-    }
-
-    .count-chip {
-      display: inline-block;
-      padding: 3px 10px;
-      background: rgba(79,110,247,0.08);
-      border: 1px solid rgba(79,110,247,0.15);
-      border-radius: 100px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--accent);
-    }
-
-    .bucket-num {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    .bucket-bar-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .mini-bar {
-      flex: 1;
-      max-width: 80px;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .mini-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-    }
-
-    .total-row td {
-      background: var(--surface2);
-      color: var(--text);
-      font-weight: 500;
-      border-top: 2px solid var(--border);
-    }
-
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 24px 0;
-      margin-top: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .footer-note {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-
-    .refresh-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-dim);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .refresh-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    @media (max-width: 640px) {
-      h1 { font-size: 20px; }
-      .kpi-value { font-size: 32px; }
-      .buckets-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-  </style>
+@media(max-width:680px){
+  .bucket-row{grid-template-columns:repeat(3,1fr)}
+  .bcard-n{font-size:20px}
+  .kpi-val{font-size:28px}
+  .wrap{padding:0 14px 40px}
+}
+</style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-logo">QC</div>
-        <div>
-          <h1>Inventory QC Dashboard</h1>
-          <div class="subtitle">SPYNE · INVENTORY DETAILS</div>
-        </div>
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">QC</div>
+      <div>
+        <div class="brand-name">Inventory QC</div>
+        <div class="brand-sub">SPYNE · INVENTORY DETAILS</div>
       </div>
-      <div class="header-meta">
-        <div class="status-pill">
-          <span class="status-dot"></span>
-          <span id="data-status">Loading…</span>
-        </div>
-        <div id="last-updated"></div>
-      </div>
+    </div>
+    <div class="header-right">
+      <div class="pill"><span class="dot"></span><span id="status-text">Loading…</span></div>
+      <span id="last-sync" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3)"></span>
+      <button class="btn btn-primary" onclick="loadData()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        Refresh
+      </button>
     </div>
   </header>
 
-  <!-- Upload fallback when live fetch is blocked -->
-  <div id="upload-fallback" style="display:none;margin-bottom:32px;">
-    <div style="background:rgba(79,110,247,0.08);border:1px solid rgba(79,110,247,0.25);border-radius:16px;padding:28px 32px;">
-      <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text);">📁 Upload CSV Manually</div>
-      <div id="upload-fallback-msg" style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;"></div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <a href="https://metabase.spyne.ai/public/question/e45c301d-aa55-4df8-a804-51ec721b6f26.csv"
-           target="_blank"
-           style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-family:var(--font-mono);font-size:12px;font-weight:500;">
-          ↓ Download CSV from Metabase
-        </a>
-        <label style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;cursor:pointer;font-family:var(--font-mono);font-size:12px;">
-          📂 Upload CSV file
-          <input type="file" accept=".csv" id="csv-upload" style="display:none" onchange="handleUpload(event)">
-        </label>
-      </div>
+  <!-- Upload fallback -->
+  <div id="upload-fallback">
+    <div class="upload-title">📁 Upload CSV Manually</div>
+    <div class="upload-msg" id="upload-msg"></div>
+    <div class="upload-actions">
+      <a class="btn btn-primary" href="https://metabase.spyne.ai/public/question/e45c301d-aa55-4df8-a804-51ec721b6f26.csv" target="_blank">↓ Download from Metabase</a>
+      <label class="btn">
+        📂 Upload CSV
+        <input type="file" accept=".csv" id="csv-file" style="display:none" onchange="handleUpload(event)">
+      </label>
     </div>
   </div>
 
-  <div id="loading">
-    <div class="loader"></div>
-    <div class="loading-text">Fetching inventory data…</div>
-  </div>
+  <!-- Banner -->
+  <div class="banner" id="banner"></div>
 
-  <div id="error-msg"></div>
+  <!-- Loading -->
+  <div id="loading"><div class="spinner"></div><div class="load-text">Fetching inventory data…</div></div>
 
-  <div id="dashboard">
-    <!-- KPI Row -->
-    <div class="kpi-row">
-      <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">QC Pending (Total)</div>
-        <div class="kpi-value" id="kpi-total">—</div>
-        <div class="kpi-sub">Items awaiting quality check</div>
+  <!-- Dashboard -->
+  <div id="dash" style="display:none">
+
+    <!-- Total + Reason Bucket cards -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Overview <span class="badge">ALL INVENTORY</span></div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--accent3)">
-        <div class="kpi-label">Within 24 hrs</div>
-        <div class="kpi-value" id="kpi-within24">—</div>
-        <div class="kpi-sub">Received in last 24 hours</div>
-      </div>
-      <div class="kpi-card" style="--card-accent: var(--accent4)">
-        <div class="kpi-label">Beyond 24 hrs</div>
-        <div class="kpi-value" id="kpi-beyond24">—</div>
-        <div class="kpi-sub">Overdue for QC</div>
-      </div>
-      <div class="kpi-card" style="--card-accent: var(--accent)">
-        <div class="kpi-label">Enterprises Affected</div>
-        <div class="kpi-value" id="kpi-enterprises">—</div>
-        <div class="kpi-sub">Unique enterprise count</div>
-      </div>
+      <div class="kpi-grid" id="kpi-total-row"></div>
+      <div class="rb-grid" id="rb-cards"></div>
     </div>
 
-    <!-- Hourly Buckets -->
+    <!-- Hourly buckets for QC Pending -->
     <div class="section">
-      <div class="section-header">
-        <div class="section-label">Hourly Buckets — QC Pending</div>
-        <div class="section-badge">ALL TYPES</div>
+      <div class="section-head">
+        <div class="section-title">Hourly Buckets <span class="badge" id="bucket-label">QC PENDING</span></div>
       </div>
-      <div class="buckets-grid" id="buckets-overall"></div>
+      <div class="bucket-row" id="buckets-overall"></div>
     </div>
 
-    <!-- Top 10 Enterprises Table -->
+    <!-- Type-wise table -->
     <div class="section">
-      <div class="section-header">
-        <div class="section-label">Top 10 Enterprises — QC Pending</div>
-        <div class="section-badge">BY VOLUME</div>
+      <div class="section-head">
+        <div class="section-title">Type-wise Breakdown <span class="badge">QC PENDING</span></div>
+        <div class="dl-btns" id="dl-type"></div>
       </div>
       <div class="table-wrap">
-        <table id="enterprise-table">
-          <thead>
-            <tr>
-              <th>#&nbsp;&nbsp;Enterprise</th>
-              <th>0–4 hrs</th>
-              <th>5–8 hrs</th>
-              <th>9–12 hrs</th>
-              <th>13–24 hrs</th>
-              <th>24+ hrs</th>
+        <div class="table-scroll">
+          <table id="type-table">
+            <thead><tr>
+              <th>Type / Platform</th>
+              <th>0–4 hrs</th><th>5–8 hrs</th><th>9–12 hrs</th><th>13–24 hrs</th><th>24+ hrs</th>
               <th>Total</th>
-            </tr>
-          </thead>
-          <tbody id="enterprise-tbody"></tbody>
-        </table>
+            </tr></thead>
+            <tbody id="type-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
 
-  <footer>
-    <div class="footer-note">Source: Metabase · Inventory Details · QC Pending only</div>
-    <div style="display:flex;gap:8px">
-      <button class="refresh-btn" id="debug-btn" onclick="showRawDebug()">🔍 Show Raw Debug</button>
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    <!-- Top 10 enterprises table -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Top 10 Enterprises <span class="badge">QC PENDING</span></div>
+        <div class="dl-btns" id="dl-ent"></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="ent-table">
+            <thead><tr>
+              <th># Enterprise</th>
+              <th>0–4 hrs</th><th>5–8 hrs</th><th>9–12 hrs</th><th>13–24 hrs</th><th>24+ hrs</th>
+              <th>Total</th>
+            </tr></thead>
+            <tbody id="ent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </footer>
-  <div id="raw-debug" style="display:none;margin:16px 0 24px;background:var(--surface);border:1px solid rgba(79,110,247,0.3);border-radius:12px;padding:20px;font-family:var(--font-mono);font-size:11px;color:#a0f0a0;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow:auto;"></div>
+
+  </div><!-- /dash -->
+</div><!-- /wrap -->
+
+<!-- Theme toggle -->
+<div class="bottom-left">
+  <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</button>
 </div>
 
 <script>
-  const DATA_URL  = '/api/data';
-  const DEBUG_URL = '/api/data?debug=1';
+// ── Config ────────────────────────────────────────────────────────
+const API   = '/api/data';
+const DEBUG = '/api/data?debug=1';
 
-  const BUCKET_DEFS = [
-    { label: '0–4 hrs',   key: 'b0_4',   min: 0,  max: 4,   color: 'rgba(79,110,247,0.12)' },
-    { label: '5–8 hrs',   key: 'b5_8',   min: 5,  max: 8,   color: 'rgba(248,196,78,0.10)' },
-    { label: '9–12 hrs',  key: 'b9_12',  min: 9,  max: 12,  color: 'rgba(249,115,116,0.10)' },
-    { label: '13–24 hrs', key: 'b13_24', min: 13, max: 24,  color: 'rgba(73,232,160,0.10)' },
-    { label: '24+ hrs',   key: 'b24p',   min: 25, max: Infinity, color: 'rgba(232,73,74,0.12)' },
-  ];
+const BUCKETS = [
+  { label:'0–4 hrs',  key:'b0',  min:0,  max:4,  fill:'rgba(78,124,255,.1)' },
+  { label:'5–8 hrs',  key:'b5',  min:5,  max:8,  fill:'rgba(255,176,58,.1)' },
+  { label:'9–12 hrs', key:'b9',  min:9,  max:12, fill:'rgba(167,139,250,.1)' },
+  { label:'13–24 hrs',key:'b13', min:13, max:24, fill:'rgba(54,217,154,.1)' },
+  { label:'24+ hrs',  key:'b24', min:25, max:9e9, fill:'rgba(255,91,91,.1)' },
+];
 
-  // ── Hours calculation ─────────────────────────────────────────────
-  function getHours(row) {
-    // Use after_24_hrs flag for fast 24+ detection
-    const a = String(row.after24hrs || '').trim().toLowerCase();
-    if (a === 'true' || a === '1' || a === 'yes') return 25;
+// ── Bucketing helpers ─────────────────────────────────────────────
+function mkBkt() { return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
+function addBkt(obj, hrs) {
+  if (hrs === null || hrs === undefined) return;
+  for (const b of BUCKETS) {
+    if (hrs >= b.min && hrs <= b.max) { obj[b.key]++; obj.total++; return; }
+  }
+}
 
-    // Compute from timestamps
-    for (const f of [row.receivedAt, row.sentAt, row.vinCreation]) {
-      if (!f) continue;
-      const d = new Date(f);
-      if (!isNaN(d)) {
-        const h = (Date.now() - d.getTime()) / 3600000;
-        if (h >= 0) return h;
-      }
+// ── Render: big bucket cards ──────────────────────────────────────
+function renderBuckets(id, obj) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  const mx = obj.total || 1;
+  BUCKETS.forEach(b => {
+    const n = obj[b.key]||0, p = Math.round(n/mx*100);
+    const d = document.createElement('div');
+    d.className = 'bcard';
+    d.innerHTML = `<div class="bcard-fill" style="--fill:${b.fill}"></div>
+      <div class="bcard-range">${b.label}</div>
+      <div class="bcard-n">${n.toLocaleString()}</div>
+      <div class="bcard-pct">${p}%</div>`;
+    setTimeout(()=>d.querySelector('.bcard-fill').style.setProperty('--pct', p+'%'), 80);
+    el.appendChild(d);
+  });
+}
+
+// ── Render: generic bucket table ──────────────────────────────────
+function renderBktTable(tbodyId, data, nameKey='name') {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  const allMax = data[0]?.total || 1;
+
+  data.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    const isRank = nameKey === 'name' && i !== undefined;
+    const nameCell = isRank
+      ? `<span class="rank ${i<3?'hi':''}">${i+1}</span>${row[nameKey]||'Unknown'}`
+      : (row[nameKey]||'Unknown');
+    tr.innerHTML = `<td>${nameCell}</td>
+      ${BUCKETS.map(b=>{
+        const n=row[b.key]||0;
+        const pct=row.total>0?n/row.total*100:0;
+        return `<td><div class="mini-bar-wrap"><span>${n.toLocaleString()}</span>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></div></td>`;
+      }).join('')}
+      <td><span class="chip">${(row.total||0).toLocaleString()}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Footer totals
+  const tot = mkBkt();
+  data.forEach(r => { BUCKETS.forEach(b=>{ tot[b.key]=(tot[b.key]||0)+(r[b.key]||0); }); tot.total+=r.total||0; });
+  const tf = document.createElement('tr');
+  tf.className = 'foot-row';
+  tf.innerHTML = `<td><strong>Subtotal</strong></td>
+    ${BUCKETS.map(b=>`<td>${(tot[b.key]||0).toLocaleString()}</td>`).join('')}
+    <td><span class="chip">${tot.total.toLocaleString()}</span></td>`;
+  tbody.appendChild(tf);
+}
+
+// ── Download helpers ──────────────────────────────────────────────
+function toCSVStr(data) {
+  const keys = ['name',...BUCKETS.map(b=>b.key),'total'];
+  const head = ['name','0-4hrs','5-8hrs','9-12hrs','13-24hrs','24+hrs','total'];
+  return [head.join(','), ...data.map(r=>keys.map(k=>r[k]??'').join(','))].join('\n');
+}
+function toJSONStr(data) { return JSON.stringify(data, null, 2); }
+function toXLSX(data, sheetName) {
+  // Simple HTML table → Excel trick (works in all browsers, opens in Excel)
+  const head = ['Name','0-4hrs','5-8hrs','9-12hrs','13-24hrs','24+hrs','Total'];
+  const keys = ['name',...BUCKETS.map(b=>b.key),'total'];
+  let html = `<table><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
+  data.forEach(r=>{ html+=`<tr>${keys.map(k=>`<td>${r[k]??''}</td>`).join('')}</tr>`; });
+  html += '</table>';
+  const blob = new Blob([`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${sheetName}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${html}</body></html>`], {type:'application/vnd.ms-excel'});
+  return blob;
+}
+function download(blob, filename) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function makeDlBtns(containerId, getData, prefix) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = ['csv','json','xlsx'].map(fmt=>
+    `<button class="dl-btn" onclick="dlTable('${containerId}','${fmt}','${prefix}')">${fmt.toUpperCase()}</button>`
+  ).join('');
+}
+
+// Store table data for download
+const _tableData = {};
+function dlTable(containerId, fmt, prefix) {
+  const data = _tableData[containerId];
+  if (!data?.length) return;
+  if (fmt==='csv')  download(new Blob([toCSVStr(data)],{type:'text/csv'}), `${prefix}.csv`);
+  if (fmt==='json') download(new Blob([toJSONStr(data)],{type:'application/json'}), `${prefix}.json`);
+  if (fmt==='xlsx') download(toXLSX(data, prefix), `${prefix}.xls`);
+}
+
+// ── Main process ──────────────────────────────────────────────────
+function processData(rows) {
+  // --- Total KPI card ---
+  const totalVins = new Set(rows.map(r=>r.vin).filter(Boolean)).size || rows.length;
+  document.getElementById('kpi-total-row').innerHTML = `
+    <div class="kpi" style="--kpi-color:var(--accent)">
+      <div class="kpi-label">Total Inventory</div>
+      <div class="kpi-val">${totalVins.toLocaleString()}</div>
+      <div class="kpi-sub">Unique VINs loaded</div>
+    </div>`;
+
+  // --- Reason bucket cards ---
+  const rbMap = {};
+  rows.forEach(r => {
+    const rb = (r.rb||'Unknown').trim();
+    if (!rbMap[rb]) rbMap[rb] = 0;
+    rbMap[rb]++;
+  });
+  const rbColors = ['var(--accent)','var(--red)','var(--amber)','var(--green)','var(--purple)'];
+  const rbEntries = Object.entries(rbMap).sort((a,b)=>b[1]-a[1]);
+  const rbEl = document.getElementById('rb-cards');
+  rbEl.innerHTML = '';
+  rbEntries.forEach(([name, count], i) => {
+    const pct = Math.round(count/rows.length*100);
+    const isQC = name.toLowerCase()==='qc pending';
+    const d = document.createElement('div');
+    d.className = 'rb-card' + (isQC?' active':'');
+    d.style.setProperty('--kpi-color', rbColors[i%rbColors.length]);
+    d.innerHTML = `<div class="rb-name">${name}</div>
+      <div class="rb-val">${count.toLocaleString()}</div>
+      <div class="rb-pct">${pct}% of total</div>`;
+    rbEl.appendChild(d);
+  });
+
+  // --- Filter QC Pending ---
+  const qc = rows.filter(r => (r.rb||'').trim().toLowerCase() === 'qc pending');
+  console.log('[QC] QC Pending:', qc.length, '/', rows.length);
+
+  if (qc.length === 0) {
+    showBanner('warn', `No "QC Pending" rows found. Unique reason_bucket values: ${Object.keys(rbMap).map(v=>`"${v}"`).join(', ')||'(empty)'}<br><a href="${DEBUG}" target="_blank">→ /api/data?debug=1</a>`);
+  }
+
+  // Update bucket label
+  document.getElementById('bucket-label').textContent = `QC PENDING (${qc.length.toLocaleString()})`;
+
+  // --- Overall hourly buckets ---
+  const overall = mkBkt();
+  qc.forEach(r => addBkt(overall, r.hrs));
+  renderBuckets('buckets-overall', overall);
+
+  // --- Type-wise breakdown ---
+  const typeMap = {};
+  qc.forEach(r => {
+    const t = (r.type||'Unknown').trim();
+    if (!typeMap[t]) typeMap[t] = { name:t, ...mkBkt() };
+    addBkt(typeMap[t], r.hrs);
+  });
+  const typeData = Object.values(typeMap).sort((a,b)=>b.total-a.total);
+  _tableData['dl-type'] = typeData;
+  makeDlBtns('dl-type', ()=>typeData, 'type-breakdown');
+  renderBktTable('type-tbody', typeData, 'name');
+
+  // --- Enterprise top 10 ---
+  const entMap = {};
+  qc.forEach(r => {
+    const e = (r.eid||'Unknown').trim();
+    if (!entMap[e]) entMap[e] = { name:e, ...mkBkt() };
+    addBkt(entMap[e], r.hrs);
+  });
+  const entData = Object.values(entMap).sort((a,b)=>b.total-a.total).slice(0,10);
+  _tableData['dl-ent'] = entData;
+  makeDlBtns('dl-ent', ()=>entData, 'top10-enterprises');
+  renderBktTable('ent-tbody', entData, 'name');
+
+  // Status pill
+  document.getElementById('status-text').textContent = `${qc.length.toLocaleString()} QC Pending`;
+}
+
+// ── Banners ───────────────────────────────────────────────────────
+function showBanner(type, html) {
+  const el = document.getElementById('banner');
+  el.className = `banner ${type}`;
+  el.style.display = 'block';
+  el.innerHTML = html;
+}
+function hideBanner() { document.getElementById('banner').style.display='none'; }
+
+// ── Theme ─────────────────────────────────────────────────────────
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('theme-btn').textContent = next==='dark' ? '🌙' : '☀️';
+  localStorage.setItem('qc-theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('qc-theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-btn').textContent = saved==='dark'?'🌙':'☀️';
+  }
+})();
+
+// ── Load data ─────────────────────────────────────────────────────
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('dash').style.display = 'none';
+  document.getElementById('upload-fallback').style.display = 'none';
+  hideBanner();
+  document.getElementById('status-text').textContent = 'Loading…';
+
+  try {
+    const t0 = Date.now();
+    const resp = await fetch(API);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+    if (!json.rows?.length) throw new Error('0 rows returned');
+    console.log(`[QC] Loaded ${json.rows.length} rows in ${Date.now()-t0}ms`);
+    if (json.lastSynced) {
+      document.getElementById('last-sync').textContent =
+        'Synced ' + new Date(json.lastSynced).toLocaleTimeString();
     }
-    return null;
-  }
-
-  function getBucket(h) {
-    for (const b of BUCKET_DEFS) if (h >= b.min && h <= b.max) return b.key;
-    return null;
-  }
-
-  function mkBucket() { return { b0_4:0, b5_8:0, b9_12:0, b13_24:0, b24p:0, total:0 }; }
-
-  function addToBucket(row, obj) {
-    const h = getHours(row);
-    if (h === null) return;
-    const k = getBucket(h);
-    if (k) { obj[k]++; obj.total++; }
-  }
-
-  // ── Renderers ─────────────────────────────────────────────────────
-  function renderBuckets(id, obj) {
-    const el = document.getElementById(id);
-    el.innerHTML = '';
-    const max = obj.total || 1;
-    BUCKET_DEFS.forEach(b => {
-      const n = obj[b.key] || 0;
-      const p = Math.round(n / max * 100);
-      const c = document.createElement('div');
-      c.className = 'bucket-card';
-      c.style.setProperty('--bucket-color', b.color);
-      setTimeout(() => c.style.setProperty('--fill-pct', p + '%'), 100);
-      c.innerHTML = `<div class="bucket-range">${b.label}</div>
-        <div class="bucket-count">${n.toLocaleString()}</div>
-        <div class="bucket-pct">${p}% of total</div>`;
-      el.appendChild(c);
-    });
-  }
-
-  function renderTable(top10) {
-    const tbody = document.getElementById('enterprise-tbody');
-    tbody.innerHTML = '';
-    top10.forEach((e, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td><span class="rank-badge ${i<3?'top3':''}">${i+1}</span>${e.name}</td>
-        ${BUCKET_DEFS.map(b => `<td><div class="bucket-bar-cell">
-          <span class="bucket-num">${(e[b.key]||0).toLocaleString()}</span>
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:${e.total>0?(e[b.key]||0)/e.total*100:0}%"></div></div>
-        </div></td>`).join('')}
-        <td><span class="count-chip">${e.total.toLocaleString()}</span></td>`;
-      tbody.appendChild(tr);
-    });
-    // Subtotal row
-    const tot = mkBucket();
-    top10.forEach(e => { BUCKET_DEFS.forEach(b => { tot[b.key]=(tot[b.key]||0)+(e[b.key]||0); }); tot.total+=e.total; });
-    const tr2 = document.createElement('tr');
-    tr2.className = 'total-row';
-    tr2.innerHTML = `<td><strong>Top 10 Subtotal</strong></td>
-      ${BUCKET_DEFS.map(b=>`<td><span class="bucket-num">${(tot[b.key]||0).toLocaleString()}</span></td>`).join('')}
-      <td><span class="count-chip">${tot.total.toLocaleString()}</span></td>`;
-    tbody.appendChild(tr2);
-  }
-
-  // ── Process rows ──────────────────────────────────────────────────
-  function processData(rows) {
-    console.log('[QC] Total rows:', rows.length);
-    console.log('[QC] Sample row:', rows[0]);
-
-    // Filter QC Pending by reasonBucket
-    const qcRows = rows.filter(r =>
-      String(r.reasonBucket || '').trim().toLowerCase() === 'qc pending'
-    );
-
-    console.log('[QC] QC Pending rows:', qcRows.length);
-
-    if (qcRows.length === 0) {
-      const uniqueBuckets = [...new Set(rows.map(r => r.reasonBucket).filter(Boolean))];
-      showWarn(`<strong>⚠ No "QC Pending" rows found.</strong><br><br>
-        <b>Total rows:</b> ${rows.length}<br>
-        <b>Unique reason_bucket values:</b> ${uniqueBuckets.map(v=>`"${v}"`).join(', ') || '(all empty)'}<br><br>
-        <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">→ Open /api/data?debug=1 for raw data info</a>`);
-    }
-
-    // KPIs — count unique vinNames
-    const uniqueVins  = new Set(qcRows.map(r => r.vinName).filter(Boolean));
-    const total       = uniqueVins.size || qcRows.length;
-    const beyond24    = qcRows.filter(r => { const h=getHours(r); return h!==null&&h>24; }).length;
-    const within24    = qcRows.length - beyond24;
-    const enterprises = new Set(qcRows.map(r => r.enterpriseId||'Unknown')).size;
-
-    document.getElementById('kpi-total').textContent       = total.toLocaleString();
-    document.getElementById('kpi-within24').textContent    = within24.toLocaleString();
-    document.getElementById('kpi-beyond24').textContent    = beyond24.toLocaleString();
-    document.getElementById('kpi-enterprises').textContent = enterprises.toLocaleString();
-
-    // Buckets
-    const overall = mkBucket();
-    qcRows.forEach(r => addToBucket(r, overall));
-    renderBuckets('buckets-overall', overall);
-
-    // Enterprise table
-    const entMap = {};
-    qcRows.forEach(r => {
-      const eid = (r.enterpriseId || 'Unknown').trim();
-      if (!entMap[eid]) entMap[eid] = { name: eid, ...mkBucket() };
-      addToBucket(r, entMap[eid]);
-    });
-    const sorted = Object.values(entMap).sort((a,b)=>b.total-a.total).slice(0,10);
-    renderTable(sorted);
-
-    document.getElementById('data-status').textContent     = `${total.toLocaleString()} QC Pending`;
-    document.getElementById('last-updated').textContent    = `Updated ${new Date().toLocaleTimeString()}`;
-  }
-
-  // ── UI helpers ────────────────────────────────────────────────────
-  function showWarn(html) {
-    const el = document.getElementById('error-msg');
-    el.style.cssText = 'display:block;background:rgba(247,196,79,0.08);border-color:rgba(247,196,79,0.3);color:#f7c94f;';
-    el.innerHTML = html;
-  }
-  function showErr(html) {
     document.getElementById('loading').style.display = 'none';
-    const el = document.getElementById('error-msg');
-    el.style.cssText = 'display:block;';
-    el.innerHTML = '⚠ ' + html;
+    document.getElementById('dash').style.display = 'block';
+    processData(json.rows);
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('upload-fallback').style.display = 'block';
+    document.getElementById('upload-msg').innerHTML =
+      `Live fetch failed: <strong>${err.message}</strong><br>Download the CSV and upload it below.`;
   }
+}
 
-  // ── Load data from /api/data ──────────────────────────────────────
-  async function loadData() {
-    document.getElementById('loading').style.display    = 'flex';
-    document.getElementById('dashboard').style.display  = 'none';
-    document.getElementById('error-msg').style.display  = 'none';
-    document.getElementById('upload-fallback').style.display = 'none';
-    document.getElementById('data-status').textContent  = 'Loading…';
+// ── CSV upload fallback ───────────────────────────────────────────
+function handleUpload(evt) {
+  const file = evt.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.trim().split(/\r?\n/);
+    const headers = lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+    function p(...ns) { return r => { for(const n of ns){const v=r[n];if(v?.trim())return v.trim();} return ''; }; }
+    const pick = (r,...ns) => { for(const n of ns){const v=r[n];if(v?.trim())return v.trim();} return ''; };
+    const rows = lines.slice(1).filter(l=>l.trim()).map(line => {
+      const vals = line.split(',').map(v=>v.replace(/^"|"$/g,'').trim());
+      const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]??'');
+      const a24 = pick(obj,'after_24_hrs','after24hrs');
+      let hrs = null;
+      if(['true','1','yes'].includes(a24.toLowerCase())) hrs = 25;
+      else {
+        for (const ts of [pick(obj,'receivedAt','received_at'),pick(obj,'sentAt','sent_at'),pick(obj,'vinCreation','vin_creation')]) {
+          if (!ts) continue;
+          const d = new Date(ts);
+          if (!isNaN(d)) { const h=(Date.now()-d)/3600000; if(h>=0){hrs=h;break;} }
+        }
+      }
+      return {
+        eid: pick(obj,'enterpriseId','enterprise_id'),
+        vin: pick(obj,'vinName','vin_name','vin'),
+        rb:  pick(obj,'reason_bucket','reasonBucket','reason bucket'),
+        type:pick(obj,'platform','Platform','type','Type'),
+        hrs,
+      };
+    });
+    document.getElementById('upload-fallback').style.display='none';
+    document.getElementById('loading').style.display='flex';
+    document.getElementById('dash').style.display='none';
+    setTimeout(()=>{
+      document.getElementById('loading').style.display='none';
+      document.getElementById('dash').style.display='block';
+      processData(rows);
+    }, 200);
+  };
+  reader.readAsText(file);
+}
 
-    try {
-      const resp = await fetch(DATA_URL);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-
-      if (json.error) throw new Error(json.error);
-      if (!json.rows?.length) throw new Error('No rows returned');
-
-      document.getElementById('loading').style.display   = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      processData(json.rows);
-
-    } catch(err) {
-      showErr(`${err.message} — <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">/api/data?debug=1</a>`);
-    }
-  }
-
-  // ── Debug panel ───────────────────────────────────────────────────
-  async function showRawDebug() {
-    const el  = document.getElementById('raw-debug');
-    const btn = document.getElementById('debug-btn');
-    if (el.style.display !== 'none') {
-      el.style.display = 'none';
-      btn.textContent = '🔍 Show Raw Debug';
-      return;
-    }
-    el.style.display = 'block';
-    btn.textContent  = '⏳ Loading…';
-    el.textContent   = 'Fetching /api/data?debug=1…';
-    try {
-      const r = await fetch(DEBUG_URL);
-      const j = await r.json();
-      el.textContent = JSON.stringify(j, null, 2);
-    } catch(e) { el.textContent = 'Error: ' + e.message; }
-    btn.textContent = '🔍 Hide Debug';
-  }
-
-  // ── CSV upload fallback ───────────────────────────────────────────
-  function handleUpload(evt) {
-    const file = evt.target.files[0];
-    if (!file) return;
-    // Parse uploaded CSV client-side using the same field mapping as data.js
-    const reader = new FileReader();
-    reader.onload = e => {
-      const text = e.target.result;
-      const lines = text.trim().split(/\r?\n/);
-      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
-      const rows = lines.slice(1).filter(l=>l.trim()).map(line => {
-        const vals = line.split(',').map(v=>v.replace(/^"|"$/g,'').trim());
-        const obj = {};
-        headers.forEach((h,i) => obj[h] = vals[i]??'');
-        return obj;
-      });
-      // Map to same shape as data.js
-      function pick(r, ...names) { for(const n of names) if(r[n]?.trim()) return r[n].trim(); return ''; }
-      const mapped = rows.map(r => ({
-        dealerVinId:  pick(r,'dealerVinId','dealer_vin_id'),
-        enterpriseId: pick(r,'enterpriseId','enterprise_id'),
-        vinName:      pick(r,'vinName','vin_name','vin'),
-        receivedAt:   pick(r,'receivedAt','received_at'),
-        sentAt:       pick(r,'sentAt','sent_at'),
-        vinCreation:  pick(r,'vinCreation','vin_creation'),
-        after24hrs:   pick(r,'after_24_hrs','after24hrs'),
-        reasonBucket: pick(r,'reason_bucket','reasonBucket','reason bucket'),
-      }));
-      document.getElementById('loading').style.display = 'flex';
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('upload-fallback').style.display = 'none';
-      setTimeout(() => {
-        document.getElementById('loading').style.display  = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        processData(mapped);
-      }, 300);
-    };
-    reader.readAsText(file);
-  }
-
-  loadData();
+loadData();
 </script>
 </body>
 </html>
