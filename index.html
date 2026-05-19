@@ -818,32 +818,88 @@
     el.innerHTML = '⚠ ' + msg;
   }
 
-  function loadData() {
+  async function loadData() {
     document.getElementById('loading').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('error-msg').style.display = 'none';
     document.getElementById('data-status').textContent = 'Loading…';
 
-    Papa.parse(CSV_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (!results.data || results.data.length === 0) {
-          showError('No data returned from the CSV endpoint. The Metabase link may require auth or CORS headers on the proxy.');
-          return;
+    try {
+      // Step 1: fetch raw text ourselves so we can inspect it
+      const resp = await fetch(CSV_URL);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      const rawText = await resp.text();
+
+      console.log('[QC Dashboard] Content-Type:', resp.headers.get('content-type'));
+      console.log('[QC Dashboard] First 300 chars:', rawText.slice(0, 300));
+
+      // Step 2: detect if it's JSON and convert
+      let csvText = rawText.trim();
+      if (csvText.startsWith('{') || csvText.startsWith('[')) {
+        console.log('[QC Dashboard] Response looks like JSON, attempting conversion…');
+        try {
+          const json = JSON.parse(csvText);
+          csvText = jsonToCSV(json);
+          console.log('[QC Dashboard] Converted JSON → CSV, first 300:', csvText.slice(0, 300));
+        } catch (e) {
+          throw new Error('Response is not valid CSV or JSON: ' + e.message);
         }
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        processData(results.data);
-      },
-      error: (err) => {
-        showError(`Failed to load CSV: ${err.message}`);
       }
-    });
+
+      // Step 3: parse CSV string
+      const result = Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false,
+      });
+
+      console.log('[QC Dashboard] Parsed rows:', result.data.length, '| Columns:', result.meta.fields);
+
+      if (!result.data || result.data.length === 0) {
+        showError('CSV parsed but 0 rows found. Check /api/debug for raw response.');
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      processData(result.data);
+
+    } catch (err) {
+      showError(`Failed to load data: ${err.message} — Check browser console & <a href="/api/debug" target="_blank" style="color:inherit;text-decoration:underline">/api/debug</a>`);
+    }
+  }
+
+  function jsonToCSV(json) {
+    // Metabase native format: { data: { cols, rows } }
+    if (json?.data?.cols && json?.data?.rows) {
+      const cols = json.data.cols;
+      const rows = json.data.rows;
+      const header = cols.map(c => escapeCsvCell(c.display_name || c.name || '')).join(',');
+      const lines = rows.map(row =>
+        row.map(cell => cell === null || cell === undefined ? '' : escapeCsvCell(String(cell))).join(',')
+      );
+      return [header, ...lines].join('\n');
+    }
+    // Array of objects
+    if (Array.isArray(json) && json.length) {
+      const keys = Object.keys(json[0]);
+      const header = keys.map(escapeCsvCell).join(',');
+      const lines = json.map(obj =>
+        keys.map(k => obj[k] === null || obj[k] === undefined ? '' : escapeCsvCell(String(obj[k]))).join(',')
+      );
+      return [header, ...lines].join('\n');
+    }
+    throw new Error('Unrecognised JSON structure');
+  }
+
+  function escapeCsvCell(val) {
+    if (val.includes(',') || val.includes('"') || val.includes('\n'))
+      return '"' + val.replace(/"/g, '""') + '"';
+    return val;
   }
 
   loadData();
+
 </script>
 </body>
 </html>
