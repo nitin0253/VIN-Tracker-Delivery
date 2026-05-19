@@ -575,8 +575,12 @@
 
   <footer>
     <div class="footer-note">Source: Metabase · Inventory Details · QC Pending only</div>
-    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    <div style="display:flex;gap:8px">
+      <button class="refresh-btn" id="debug-btn" onclick="showRawDebug()">🔍 Show Raw Debug</button>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
   </footer>
+  <div id="raw-debug" style="display:none;margin:16px 0 24px;background:var(--surface);border:1px solid rgba(79,110,247,0.3);border-radius:12px;padding:20px;font-family:var(--font-mono);font-size:11px;color:#a0f0a0;white-space:pre-wrap;word-break:break-all;max-height:500px;overflow:auto;"></div>
 </div>
 
 <script>
@@ -821,6 +825,27 @@
     } catch(err) {
       showErr(`⚠ ${err.message} — <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">Open /api/debug</a>`);
     }
+  }
+
+  async function showRawDebug() {
+    const el = document.getElementById('raw-debug');
+    const btn = document.getElementById('debug-btn');
+    if (el.style.display !== 'none') {
+      el.style.display = 'none';
+      btn.textContent = '🔍 Show Raw Debug';
+      return;
+    }
+    el.style.display = 'block';
+    btn.textContent = '⏳ Loading…';
+    el.textContent = 'Fetching /api/debug…';
+    try {
+      const r = await fetch('/api/debug');
+      const j = await r.json();
+      el.textContent = JSON.stringify(j, null, 2);
+    } catch(e) {
+      el.textContent = 'Error: ' + e.message;
+    }
+    btn.textContent = '🔍 Hide Debug';
   }
 
   loadData();
