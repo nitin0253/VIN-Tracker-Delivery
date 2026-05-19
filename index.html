@@ -580,9 +580,8 @@
 </div>
 
 <script>
-  const CSV_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'https://metabase.spyne.ai/public/question/15e908e4-fe21-4982-9d8c-4aff07f2c948.csv'
-    : '/api/proxy';
+  const CSV_URL = '/api/proxy';
+  const DEBUG_URL = '/api/debug';
 
   const BUCKET_DEFS = [
     { label: '0–4 hrs',   key: 'b0_4',   min: 0,  max: 4,   color: 'rgba(79,110,247,0.12)' },
@@ -592,18 +591,19 @@
     { label: '24+ hrs',   key: 'b24p',   min: 25, max: Infinity, color: 'rgba(232,73,74,0.12)' },
   ];
 
-  // ── Column resolver ───────────────────────────────────────────────
-  // Given a sample row, find the actual CSV key that best matches any
-  // of the supplied candidate names (case-insensitive, ignores _ / - / space).
+  let COLS = {};
+
+  // ── Normalise a string for fuzzy column matching ──────────────────
+  const norm = s => s.toLowerCase().replace(/[\s_\-]/g, '');
+
   function resolveCol(sampleRow, ...candidates) {
     const keys = Object.keys(sampleRow);
-    const norm = s => s.toLowerCase().replace(/[\s_\-]/g, '');
     for (const c of candidates) {
       const n = norm(c);
       const hit = keys.find(k => norm(k) === n);
       if (hit) return hit;
     }
-    // Partial match fallback
+    // partial fallback
     for (const c of candidates) {
       const n = norm(c);
       const hit = keys.find(k => norm(k).includes(n) || n.includes(norm(k)));
@@ -612,212 +612,174 @@
     return null;
   }
 
-  function getVal(row, col) {
-    return col ? (row[col] ?? '') : '';
-  }
+  function g(row, col) { return col ? String(row[col] ?? '') : ''; }
 
-  // ── Hour calculation ───────────────────────────────────────────────
-  let COLS = {}; // populated once from first row
-
+  // ── Hours since receivedAt ────────────────────────────────────────
   function getHours(row) {
-    // 1. Use after_24_hrs boolean flag
-    const afterVal = getVal(row, COLS.after24).toString().trim().toLowerCase();
-    if (afterVal === 'true' || afterVal === '1' || afterVal === 'yes') return 25;
-
-    // 2. Use receivedAt timestamp
-    const recv = getVal(row, COLS.receivedAt);
-    if (recv) {
-      const d = new Date(recv);
-      if (!isNaN(d)) {
-        const h = (Date.now() - d.getTime()) / 3600000;
-        if (h >= 0) return h;
-      }
+    const a = g(row, COLS.after24).trim().toLowerCase();
+    if (a === 'true' || a === '1' || a === 'yes') return 25;
+    for (const c of [COLS.receivedAt, COLS.sentAt, COLS.vinCreation]) {
+      if (!c) continue;
+      const d = new Date(g(row, c));
+      if (!isNaN(d)) { const h = (Date.now() - d) / 3600000; if (h >= 0) return h; }
     }
-
-    // 3. Use sentAt timestamp
-    const sent = getVal(row, COLS.sentAt);
-    if (sent) {
-      const d = new Date(sent);
-      if (!isNaN(d)) {
-        const h = (Date.now() - d.getTime()) / 3600000;
-        if (h >= 0) return h;
-      }
-    }
-
-    // 4. Use vinCreation timestamp
-    const vc = getVal(row, COLS.vinCreation);
-    if (vc) {
-      const d = new Date(vc);
-      if (!isNaN(d)) {
-        const h = (Date.now() - d.getTime()) / 3600000;
-        if (h >= 0) return h;
-      }
-    }
-
     return null;
   }
 
-  function getBucket(hrs) {
-    for (const b of BUCKET_DEFS) if (hrs >= b.min && hrs <= b.max) return b.key;
+  function getBucket(h) {
+    for (const b of BUCKET_DEFS) if (h >= b.min && h <= b.max) return b.key;
     return null;
   }
 
-  function makeBucketObj() {
-    return { b0_4: 0, b5_8: 0, b9_12: 0, b13_24: 0, b24p: 0, total: 0 };
-  }
+  function mkBucket() { return { b0_4:0, b5_8:0, b9_12:0, b13_24:0, b24p:0, total:0 }; }
 
-  function bucketRow(row, obj) {
-    const hrs = getHours(row);
-    if (hrs === null) return;
-    const bKey = getBucket(hrs);
-    if (bKey) { obj[bKey]++; obj.total++; }
+  function addToBucket(row, obj) {
+    const h = getHours(row);
+    if (h === null) return;
+    const k = getBucket(h);
+    if (k) { obj[k]++; obj.total++; }
   }
 
   // ── Renderers ─────────────────────────────────────────────────────
-  function renderBuckets(containerId, bucketObj, maxVal) {
-    const el = document.getElementById(containerId);
+  function renderBuckets(id, obj, max) {
+    const el = document.getElementById(id);
     el.innerHTML = '';
     BUCKET_DEFS.forEach(b => {
-      const count = bucketObj[b.key] || 0;
-      const pct = maxVal > 0 ? Math.round((count / maxVal) * 100) : 0;
-      const card = document.createElement('div');
-      card.className = 'bucket-card';
-      card.style.setProperty('--bucket-color', b.color);
-      setTimeout(() => card.style.setProperty('--fill-pct', pct + '%'), 100);
-      card.innerHTML = `
-        <div class="bucket-range">${b.label}</div>
-        <div class="bucket-count">${count.toLocaleString()}</div>
-        <div class="bucket-pct">${pct}% of total</div>
-      `;
-      el.appendChild(card);
+      const n = obj[b.key] || 0;
+      const p = max > 0 ? Math.round(n / max * 100) : 0;
+      const c = document.createElement('div');
+      c.className = 'bucket-card';
+      c.style.setProperty('--bucket-color', b.color);
+      setTimeout(() => c.style.setProperty('--fill-pct', p + '%'), 100);
+      c.innerHTML = `<div class="bucket-range">${b.label}</div>
+        <div class="bucket-count">${n.toLocaleString()}</div>
+        <div class="bucket-pct">${p}% of total</div>`;
+      el.appendChild(c);
     });
   }
 
-  function renderEnterpriseTable(top10) {
+  function renderTable(top10) {
     const tbody = document.getElementById('enterprise-tbody');
     tbody.innerHTML = '';
-    const grandMax = top10[0]?.total || 1;
-    top10.forEach((ent, i) => {
-      const rank = i + 1;
+    top10.forEach((e, i) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <span class="rank-badge ${rank <= 3 ? 'top3' : ''}">${rank}</span>
-          ${ent.name}
-        </td>
-        ${BUCKET_DEFS.map(b => `
-          <td>
-            <div class="bucket-bar-cell">
-              <span class="bucket-num">${(ent[b.key] || 0).toLocaleString()}</span>
-              <div class="mini-bar"><div class="mini-bar-fill" style="width:${ent.total > 0 ? ((ent[b.key]||0)/ent.total*100) : 0}%"></div></div>
-            </div>
-          </td>
-        `).join('')}
-        <td><span class="count-chip">${ent.total.toLocaleString()}</span></td>
-      `;
+      tr.innerHTML = `<td><span class="rank-badge ${i<3?'top3':''}">${i+1}</span>${e.name}</td>
+        ${BUCKET_DEFS.map(b => `<td><div class="bucket-bar-cell">
+          <span class="bucket-num">${(e[b.key]||0).toLocaleString()}</span>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:${e.total>0?(e[b.key]||0)/e.total*100:0}%"></div></div>
+        </div></td>`).join('')}
+        <td><span class="count-chip">${e.total.toLocaleString()}</span></td>`;
       tbody.appendChild(tr);
     });
-
-    const totals = makeBucketObj();
-    top10.forEach(e => {
-      BUCKET_DEFS.forEach(b => { totals[b.key] = (totals[b.key]||0) + (e[b.key]||0); });
-      totals.total += e.total;
-    });
-    const trTot = document.createElement('tr');
-    trTot.className = 'total-row';
-    trTot.innerHTML = `
-      <td><strong>Top 10 Subtotal</strong></td>
-      ${BUCKET_DEFS.map(b => `<td><span class="bucket-num">${(totals[b.key]||0).toLocaleString()}</span></td>`).join('')}
-      <td><span class="count-chip">${totals.total.toLocaleString()}</span></td>
-    `;
-    tbody.appendChild(trTot);
+    const tot = mkBucket();
+    top10.forEach(e => { BUCKET_DEFS.forEach(b => { tot[b.key]=(tot[b.key]||0)+(e[b.key]||0); }); tot.total+=e.total; });
+    const tr2 = document.createElement('tr');
+    tr2.className = 'total-row';
+    tr2.innerHTML = `<td><strong>Top 10 Subtotal</strong></td>
+      ${BUCKET_DEFS.map(b=>`<td><span class="bucket-num">${(tot[b.key]||0).toLocaleString()}</span></td>`).join('')}
+      <td><span class="count-chip">${tot.total.toLocaleString()}</span></td>`;
+    tbody.appendChild(tr2);
   }
 
-  // ── Debug panel ───────────────────────────────────────────────────
-  function showDebug(rows, qcRows) {
-    const sample = rows[0] || {};
-    const allKeys = Object.keys(sample);
-    const uniqueRB = [...new Set(rows.map(r => getVal(r, COLS.reasonBucket)).filter(Boolean))].slice(0, 15);
-
+  // ── Debug banner ──────────────────────────────────────────────────
+  function showWarn(html) {
     const el = document.getElementById('error-msg');
-    el.style.display = 'block';
-    el.style.background = 'rgba(247,196,79,0.08)';
-    el.style.borderColor = 'rgba(247,196,79,0.3)';
-    el.style.color = '#f7c94f';
-    el.innerHTML = `
-      <strong>⚠ No "QC Pending" rows matched.</strong> Debug info:<br><br>
-      <strong>Total rows loaded:</strong> ${rows.length}<br>
-      <strong>Detected reason_bucket col:</strong> <code>${COLS.reasonBucket || 'NOT FOUND'}</code><br>
-      <strong>Unique values in that col:</strong> ${uniqueRB.map(v => `"${v}"`).join(', ') || '(empty)'}<br>
-      <strong>All CSV columns (${allKeys.length}):</strong> ${allKeys.join(', ')}<br><br>
-      <em>Check the browser console for full sample row. Update the resolveCol candidates in index.html to match your actual column names.</em>
-    `;
+    el.style.cssText = 'display:block;background:rgba(247,196,79,0.08);border-color:rgba(247,196,79,0.3);color:#f7c94f;';
+    el.innerHTML = html;
+  }
+  function showErr(html) {
+    document.getElementById('loading').style.display = 'none';
+    const el = document.getElementById('error-msg');
+    el.style.cssText = 'display:block;';
+    el.innerHTML = html;
   }
 
-  // ── Main processor ────────────────────────────────────────────────
+  // ── processData ───────────────────────────────────────────────────
   function processData(rows) {
-    if (!rows.length) return;
-
-    // Resolve column names once from the first row
+    const sample = rows[0] || {};
     COLS = {
-      reasonBucket: resolveCol(rows[0], 'reason_bucket', 'reason bucket', 'reasonbucket', 'reason'),
-      enterpriseId: resolveCol(rows[0], 'enterpriseId', 'enterprise_id', 'enterpriseid', 'enterprise'),
-      after24:      resolveCol(rows[0], 'after_24_hrs', 'after24hrs', 'after_24hrs', 'after24'),
-      receivedAt:   resolveCol(rows[0], 'receivedAt', 'received_at', 'receivedat'),
-      sentAt:       resolveCol(rows[0], 'sentAt', 'sent_at', 'sentat'),
-      vinCreation:  resolveCol(rows[0], 'vinCreation', 'vin_creation', 'vincreation'),
+      reasonBucket: resolveCol(sample, 'reason_bucket','reason bucket','reasonbucket','reason','hold_reason'),
+      vinName:      resolveCol(sample, 'vinName','vin_name','vinname','vin'),
+      enterpriseId: resolveCol(sample, 'enterpriseId','enterprise_id','enterpriseid','enterprise'),
+      after24:      resolveCol(sample, 'after_24_hrs','after24hrs','after_24hrs','after24'),
+      receivedAt:   resolveCol(sample, 'receivedAt','received_at','receivedat'),
+      sentAt:       resolveCol(sample, 'sentAt','sent_at','sentat'),
+      vinCreation:  resolveCol(sample, 'vinCreation','vin_creation','vincreation'),
     };
+    console.log('[QC] Columns detected:', COLS);
+    console.log('[QC] Sample row:', sample);
+    console.log('[QC] All columns:', Object.keys(sample));
 
-    console.table(COLS);
-    console.log('Sample row:', rows[0]);
-
-    // Filter QC Pending (case-insensitive)
+    // Filter QC Pending — case-insensitive, trim whitespace
     const qcRows = rows.filter(r =>
-      getVal(r, COLS.reasonBucket).toString().trim().toLowerCase() === 'qc pending'
+      g(r, COLS.reasonBucket).trim().toLowerCase() === 'qc pending'
     );
 
+    console.log('[QC] QC Pending rows:', qcRows.length, '/', rows.length);
+
     if (qcRows.length === 0) {
-      showDebug(rows, qcRows);
+      const allCols = Object.keys(sample);
+      const rbVals  = COLS.reasonBucket
+        ? [...new Set(rows.map(r => g(r, COLS.reasonBucket)).filter(Boolean))].slice(0, 20)
+        : [];
+      showWarn(`<strong>⚠ No "QC Pending" rows matched.</strong><br><br>
+        <b>Total rows:</b> ${rows.length} &nbsp;|&nbsp;
+        <b>Columns found (${allCols.length}):</b> ${allCols.join(', ')}<br>
+        <b>Detected reason_bucket col:</b> <code>${COLS.reasonBucket || 'NOT FOUND'}</code><br>
+        <b>Unique values in that col:</b> ${rbVals.map(v=>`"${v}"`).join(', ') || '(empty)'}<br><br>
+        <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">→ Open /api/debug for raw upstream info</a>`);
     }
 
-    // KPIs
-    const total = qcRows.length;
-    const beyond24 = qcRows.filter(r => { const h = getHours(r); return h !== null && h > 24; }).length;
-    const within24 = total - beyond24;
-    const enterprises = new Set(qcRows.map(r => getVal(r, COLS.enterpriseId) || 'Unknown')).size;
+    // Count unique vinNames with reason_bucket = QC Pending
+    const uniqueVins = new Set(qcRows.map(r => g(r, COLS.vinName)).filter(Boolean));
+    const total = uniqueVins.size || qcRows.length; // fallback to row count
+
+    const beyond24 = qcRows.filter(r => { const h=getHours(r); return h!==null&&h>24; }).length;
+    const within24 = qcRows.length - beyond24;
+    const enterprises = new Set(qcRows.map(r => g(r, COLS.enterpriseId)||'Unknown')).size;
 
     document.getElementById('kpi-total').textContent      = total.toLocaleString();
     document.getElementById('kpi-within24').textContent   = within24.toLocaleString();
     document.getElementById('kpi-beyond24').textContent   = beyond24.toLocaleString();
     document.getElementById('kpi-enterprises').textContent = enterprises.toLocaleString();
 
-    // Overall buckets
-    const overall = makeBucketObj();
-    qcRows.forEach(r => bucketRow(r, overall));
+    const overall = mkBucket();
+    qcRows.forEach(r => addToBucket(r, overall));
     renderBuckets('buckets-overall', overall, overall.total || 1);
 
-    // Enterprise buckets
     const entMap = {};
     qcRows.forEach(r => {
-      const eid = (getVal(r, COLS.enterpriseId) || 'Unknown').toString().trim();
-      if (!entMap[eid]) entMap[eid] = { name: eid, ...makeBucketObj() };
-      bucketRow(r, entMap[eid]);
+      const eid = (g(r, COLS.enterpriseId)||'Unknown').trim();
+      if (!entMap[eid]) entMap[eid] = { name: eid, ...mkBucket() };
+      addToBucket(r, entMap[eid]);
     });
-
-    const sorted = Object.values(entMap).sort((a, b) => b.total - a.total).slice(0, 10);
-    renderEnterpriseTable(sorted);
+    const sorted = Object.values(entMap).sort((a,b)=>b.total-a.total).slice(0,10);
+    renderTable(sorted);
 
     document.getElementById('data-status').textContent = `${total.toLocaleString()} QC Pending`;
     document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
   }
 
-  function showError(msg) {
-    document.getElementById('loading').style.display = 'none';
-    const el = document.getElementById('error-msg');
-    el.style.display = 'block';
-    el.innerHTML = '⚠ ' + msg;
+  // ── JSON → CSV conversion ─────────────────────────────────────────
+  function jsonToCSV(json) {
+    // Metabase { data: { cols, rows } }
+    if (json?.data?.cols && json?.data?.rows) {
+      const cols = json.data.cols, rows = json.data.rows;
+      const hdr = cols.map(c => esc(c.display_name||c.name||'')).join(',');
+      return [hdr, ...rows.map(r=>r.map(v=>v==null?'':esc(String(v))).join(','))].join('\r\n');
+    }
+    if (Array.isArray(json) && json.length) {
+      const keys = Object.keys(json[0]);
+      const hdr  = keys.map(esc).join(',');
+      return [hdr, ...json.map(o=>keys.map(k=>o[k]==null?'':esc(String(o[k]))).join(','))].join('\r\n');
+    }
+    throw new Error('Unknown JSON shape');
+  }
+  function esc(v) {
+    return /[,"\r\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
   }
 
+  // ── loadData ──────────────────────────────────────────────────────
   async function loadData() {
     document.getElementById('loading').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'none';
@@ -825,38 +787,30 @@
     document.getElementById('data-status').textContent = 'Loading…';
 
     try {
-      // Step 1: fetch raw text ourselves so we can inspect it
       const resp = await fetch(CSV_URL);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-      const rawText = await resp.text();
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} from proxy`);
+      let text = await resp.text();
 
-      console.log('[QC Dashboard] Content-Type:', resp.headers.get('content-type'));
-      console.log('[QC Dashboard] First 300 chars:', rawText.slice(0, 300));
+      console.log('[QC] Raw first 400:', text.slice(0, 400));
 
-      // Step 2: detect if it's JSON and convert
-      let csvText = rawText.trim();
-      if (csvText.startsWith('{') || csvText.startsWith('[')) {
-        console.log('[QC Dashboard] Response looks like JSON, attempting conversion…');
-        try {
-          const json = JSON.parse(csvText);
-          csvText = jsonToCSV(json);
-          console.log('[QC Dashboard] Converted JSON → CSV, first 300:', csvText.slice(0, 300));
-        } catch (e) {
-          throw new Error('Response is not valid CSV or JSON: ' + e.message);
-        }
+      // Convert JSON if needed
+      if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+        try { text = jsonToCSV(JSON.parse(text)); }
+        catch(e) { throw new Error('JSON received but conversion failed: ' + e.message); }
       }
 
-      // Step 3: parse CSV string
-      const result = Papa.parse(csvText, {
+      // PapaParse with auto-detect delimiter
+      const result = Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: false,
+        delimitersToGuess: [',', '\t', '|', ';'],
       });
 
-      console.log('[QC Dashboard] Parsed rows:', result.data.length, '| Columns:', result.meta.fields);
+      console.log('[QC] Parse result — fields:', result.meta?.fields, '| rows:', result.data?.length);
 
-      if (!result.data || result.data.length === 0) {
-        showError('CSV parsed but 0 rows found. Check /api/debug for raw response.');
+      if (!result.data?.length) {
+        showErr(`Parsed 0 rows. <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">Check /api/debug</a>`);
         return;
       }
 
@@ -864,42 +818,12 @@
       document.getElementById('dashboard').style.display = 'block';
       processData(result.data);
 
-    } catch (err) {
-      showError(`Failed to load data: ${err.message} — Check browser console & <a href="/api/debug" target="_blank" style="color:inherit;text-decoration:underline">/api/debug</a>`);
+    } catch(err) {
+      showErr(`⚠ ${err.message} — <a href="${DEBUG_URL}" target="_blank" style="color:inherit;text-decoration:underline">Open /api/debug</a>`);
     }
-  }
-
-  function jsonToCSV(json) {
-    // Metabase native format: { data: { cols, rows } }
-    if (json?.data?.cols && json?.data?.rows) {
-      const cols = json.data.cols;
-      const rows = json.data.rows;
-      const header = cols.map(c => escapeCsvCell(c.display_name || c.name || '')).join(',');
-      const lines = rows.map(row =>
-        row.map(cell => cell === null || cell === undefined ? '' : escapeCsvCell(String(cell))).join(',')
-      );
-      return [header, ...lines].join('\n');
-    }
-    // Array of objects
-    if (Array.isArray(json) && json.length) {
-      const keys = Object.keys(json[0]);
-      const header = keys.map(escapeCsvCell).join(',');
-      const lines = json.map(obj =>
-        keys.map(k => obj[k] === null || obj[k] === undefined ? '' : escapeCsvCell(String(obj[k]))).join(',')
-      );
-      return [header, ...lines].join('\n');
-    }
-    throw new Error('Unrecognised JSON structure');
-  }
-
-  function escapeCsvCell(val) {
-    if (val.includes(',') || val.includes('"') || val.includes('\n'))
-      return '"' + val.replace(/"/g, '""') + '"';
-    return val;
   }
 
   loadData();
-
 </script>
 </body>
 </html>
