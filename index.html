@@ -580,7 +580,6 @@
 </div>
 
 <script>
-  // Use /api/proxy to avoid CORS issues on Vercel; falls back to direct URL in local dev
   const CSV_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'https://metabase.spyne.ai/public/question/15e908e4-fe21-4982-9d8c-4aff07f2c948.csv'
     : '/api/proxy';
@@ -593,25 +592,73 @@
     { label: '24+ hrs',   key: 'b24p',   min: 25, max: Infinity, color: 'rgba(232,73,74,0.12)' },
   ];
 
-  function getBucket(hrs) {
-    for (const b of BUCKET_DEFS) {
-      if (hrs >= b.min && hrs <= b.max) return b.key;
+  // ── Column resolver ───────────────────────────────────────────────
+  // Given a sample row, find the actual CSV key that best matches any
+  // of the supplied candidate names (case-insensitive, ignores _ / - / space).
+  function resolveCol(sampleRow, ...candidates) {
+    const keys = Object.keys(sampleRow);
+    const norm = s => s.toLowerCase().replace(/[\s_\-]/g, '');
+    for (const c of candidates) {
+      const n = norm(c);
+      const hit = keys.find(k => norm(k) === n);
+      if (hit) return hit;
+    }
+    // Partial match fallback
+    for (const c of candidates) {
+      const n = norm(c);
+      const hit = keys.find(k => norm(k).includes(n) || n.includes(norm(k)));
+      if (hit) return hit;
     }
     return null;
   }
 
-  function getHours(row) {
-    // Prefer after_24_hrs field; fall back to sentAt/receivedAt diff
-    const after = (row['after_24_hrs'] || '').toString().toLowerCase();
-    if (after === 'true' || after === '1' || after === 'yes') return 25;
+  function getVal(row, col) {
+    return col ? (row[col] ?? '') : '';
+  }
 
-    // Try to compute from receivedAt
-    const recv = row['receivedAt'] || row['receivedat'] || row['received_at'];
+  // ── Hour calculation ───────────────────────────────────────────────
+  let COLS = {}; // populated once from first row
+
+  function getHours(row) {
+    // 1. Use after_24_hrs boolean flag
+    const afterVal = getVal(row, COLS.after24).toString().trim().toLowerCase();
+    if (afterVal === 'true' || afterVal === '1' || afterVal === 'yes') return 25;
+
+    // 2. Use receivedAt timestamp
+    const recv = getVal(row, COLS.receivedAt);
     if (recv) {
-      const diffMs = Date.now() - new Date(recv).getTime();
-      const diffH = diffMs / 3600000;
-      if (!isNaN(diffH) && diffH >= 0) return diffH;
+      const d = new Date(recv);
+      if (!isNaN(d)) {
+        const h = (Date.now() - d.getTime()) / 3600000;
+        if (h >= 0) return h;
+      }
     }
+
+    // 3. Use sentAt timestamp
+    const sent = getVal(row, COLS.sentAt);
+    if (sent) {
+      const d = new Date(sent);
+      if (!isNaN(d)) {
+        const h = (Date.now() - d.getTime()) / 3600000;
+        if (h >= 0) return h;
+      }
+    }
+
+    // 4. Use vinCreation timestamp
+    const vc = getVal(row, COLS.vinCreation);
+    if (vc) {
+      const d = new Date(vc);
+      if (!isNaN(d)) {
+        const h = (Date.now() - d.getTime()) / 3600000;
+        if (h >= 0) return h;
+      }
+    }
+
+    return null;
+  }
+
+  function getBucket(hrs) {
+    for (const b of BUCKET_DEFS) if (hrs >= b.min && hrs <= b.max) return b.key;
     return null;
   }
 
@@ -626,6 +673,7 @@
     if (bKey) { obj[bKey]++; obj.total++; }
   }
 
+  // ── Renderers ─────────────────────────────────────────────────────
   function renderBuckets(containerId, bucketObj, maxVal) {
     const el = document.getElementById(containerId);
     el.innerHTML = '';
@@ -645,17 +693,16 @@
     });
   }
 
-  function renderEnterpriseTable(top10, grandMax) {
+  function renderEnterpriseTable(top10) {
     const tbody = document.getElementById('enterprise-tbody');
     tbody.innerHTML = '';
+    const grandMax = top10[0]?.total || 1;
     top10.forEach((ent, i) => {
       const rank = i + 1;
-      const isTop3 = rank <= 3;
-      const pct = grandMax > 0 ? (ent.total / grandMax * 100) : 0;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
-          <span class="rank-badge ${isTop3 ? 'top3' : ''}">${rank}</span>
+          <span class="rank-badge ${rank <= 3 ? 'top3' : ''}">${rank}</span>
           ${ent.name}
         </td>
         ${BUCKET_DEFS.map(b => `
@@ -671,7 +718,6 @@
       tbody.appendChild(tr);
     });
 
-    // Total row
     const totals = makeBucketObj();
     top10.forEach(e => {
       BUCKET_DEFS.forEach(b => { totals[b.key] = (totals[b.key]||0) + (e[b.key]||0); });
@@ -687,26 +733,62 @@
     tbody.appendChild(trTot);
   }
 
+  // ── Debug panel ───────────────────────────────────────────────────
+  function showDebug(rows, qcRows) {
+    const sample = rows[0] || {};
+    const allKeys = Object.keys(sample);
+    const uniqueRB = [...new Set(rows.map(r => getVal(r, COLS.reasonBucket)).filter(Boolean))].slice(0, 15);
+
+    const el = document.getElementById('error-msg');
+    el.style.display = 'block';
+    el.style.background = 'rgba(247,196,79,0.08)';
+    el.style.borderColor = 'rgba(247,196,79,0.3)';
+    el.style.color = '#f7c94f';
+    el.innerHTML = `
+      <strong>⚠ No "QC Pending" rows matched.</strong> Debug info:<br><br>
+      <strong>Total rows loaded:</strong> ${rows.length}<br>
+      <strong>Detected reason_bucket col:</strong> <code>${COLS.reasonBucket || 'NOT FOUND'}</code><br>
+      <strong>Unique values in that col:</strong> ${uniqueRB.map(v => `"${v}"`).join(', ') || '(empty)'}<br>
+      <strong>All CSV columns (${allKeys.length}):</strong> ${allKeys.join(', ')}<br><br>
+      <em>Check the browser console for full sample row. Update the resolveCol candidates in index.html to match your actual column names.</em>
+    `;
+  }
+
+  // ── Main processor ────────────────────────────────────────────────
   function processData(rows) {
-    // Filter QC Pending
-    const qcRows = rows.filter(r => {
-      const rb = (r['reason_bucket'] || r['reason bucket'] || '').trim().toLowerCase();
-      return rb === 'qc pending';
-    });
+    if (!rows.length) return;
 
-    // Overall KPIs
+    // Resolve column names once from the first row
+    COLS = {
+      reasonBucket: resolveCol(rows[0], 'reason_bucket', 'reason bucket', 'reasonbucket', 'reason'),
+      enterpriseId: resolveCol(rows[0], 'enterpriseId', 'enterprise_id', 'enterpriseid', 'enterprise'),
+      after24:      resolveCol(rows[0], 'after_24_hrs', 'after24hrs', 'after_24hrs', 'after24'),
+      receivedAt:   resolveCol(rows[0], 'receivedAt', 'received_at', 'receivedat'),
+      sentAt:       resolveCol(rows[0], 'sentAt', 'sent_at', 'sentat'),
+      vinCreation:  resolveCol(rows[0], 'vinCreation', 'vin_creation', 'vincreation'),
+    };
+
+    console.table(COLS);
+    console.log('Sample row:', rows[0]);
+
+    // Filter QC Pending (case-insensitive)
+    const qcRows = rows.filter(r =>
+      getVal(r, COLS.reasonBucket).toString().trim().toLowerCase() === 'qc pending'
+    );
+
+    if (qcRows.length === 0) {
+      showDebug(rows, qcRows);
+    }
+
+    // KPIs
     const total = qcRows.length;
-    const beyond24 = qcRows.filter(r => {
-      const hrs = getHours(r);
-      return hrs !== null && hrs > 24;
-    }).length;
+    const beyond24 = qcRows.filter(r => { const h = getHours(r); return h !== null && h > 24; }).length;
     const within24 = total - beyond24;
+    const enterprises = new Set(qcRows.map(r => getVal(r, COLS.enterpriseId) || 'Unknown')).size;
 
-    const enterprises = new Set(qcRows.map(r => r['enterpriseId'] || r['enterpriseid'] || r['enterprise_id'] || '')).size;
-
-    document.getElementById('kpi-total').textContent = total.toLocaleString();
-    document.getElementById('kpi-within24').textContent = within24.toLocaleString();
-    document.getElementById('kpi-beyond24').textContent = beyond24.toLocaleString();
+    document.getElementById('kpi-total').textContent      = total.toLocaleString();
+    document.getElementById('kpi-within24').textContent   = within24.toLocaleString();
+    document.getElementById('kpi-beyond24').textContent   = beyond24.toLocaleString();
     document.getElementById('kpi-enterprises').textContent = enterprises.toLocaleString();
 
     // Overall buckets
@@ -714,22 +796,17 @@
     qcRows.forEach(r => bucketRow(r, overall));
     renderBuckets('buckets-overall', overall, overall.total || 1);
 
-    // Enterprise bucketing
+    // Enterprise buckets
     const entMap = {};
     qcRows.forEach(r => {
-      const eid = (r['enterpriseId'] || r['enterpriseid'] || r['enterprise_id'] || 'Unknown').toString();
+      const eid = (getVal(r, COLS.enterpriseId) || 'Unknown').toString().trim();
       if (!entMap[eid]) entMap[eid] = { name: eid, ...makeBucketObj() };
       bucketRow(r, entMap[eid]);
     });
 
-    const sorted = Object.values(entMap)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 10);
+    const sorted = Object.values(entMap).sort((a, b) => b.total - a.total).slice(0, 10);
+    renderEnterpriseTable(sorted);
 
-    const grandMax = sorted[0]?.total || 1;
-    renderEnterpriseTable(sorted, grandMax);
-
-    // Update status
     document.getElementById('data-status').textContent = `${total.toLocaleString()} QC Pending`;
     document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
   }
@@ -738,7 +815,7 @@
     document.getElementById('loading').style.display = 'none';
     const el = document.getElementById('error-msg');
     el.style.display = 'block';
-    el.textContent = '⚠ ' + msg;
+    el.innerHTML = '⚠ ' + msg;
   }
 
   function loadData() {
@@ -753,7 +830,7 @@
       skipEmptyLines: true,
       complete: (results) => {
         if (!results.data || results.data.length === 0) {
-          showError('No data returned from the CSV endpoint. Check the URL or CORS settings.');
+          showError('No data returned from the CSV endpoint. The Metabase link may require auth or CORS headers on the proxy.');
           return;
         }
         document.getElementById('loading').style.display = 'none';
@@ -761,7 +838,7 @@
         processData(results.data);
       },
       error: (err) => {
-        showError(`Failed to load CSV: ${err.message}. The Metabase endpoint may require authentication or CORS headers.`);
+        showError(`Failed to load CSV: ${err.message}`);
       }
     });
   }
