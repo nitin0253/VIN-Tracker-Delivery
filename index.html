@@ -112,13 +112,15 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
 
 /* ── Bucket bar cards ────────────────────────────────────────────── */
 .bucket-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.bcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 14px 16px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
-.bcard:hover{border-color:var(--border2)}
-.bcard-fill{position:absolute;bottom:0;left:0;right:0;height:var(--pct,0%);max-height:60%;background:var(--fill,rgba(78,124,255,.07));transition:height .9s cubic-bezier(.4,0,.2,1);z-index:0;pointer-events:none}
-.bcard>*{position:relative;z-index:1}
-.bcard-range{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-bottom:10px}
-.bcard-n{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.5)}
-.bcard-pct{font-size:11px;color:var(--text3);margin-top:6px}
+/* Horizontal stat-bar card style */
+.bcard{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--bcard-accent,var(--accent));border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s,border-color .2s;box-shadow:var(--card-shadow)}
+.bcard:hover{box-shadow:0 4px 20px rgba(0,0,0,.35);border-color:var(--bcard-accent,var(--accent))}
+.bcard-top{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.bcard-range{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.bcard-pct{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--bcard-accent,var(--accent));font-weight:600}
+.bcard-n{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;color:var(--text)}
+.bcard-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.bcard-bar-fill{height:100%;width:var(--pct,0%);background:var(--bcard-accent,var(--accent));border-radius:2px;transition:width .9s cubic-bezier(.4,0,.2,1)}
 
 /* ── Table ───────────────────────────────────────────────────────── */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)}
@@ -146,6 +148,22 @@ td:last-child{padding-right:20px;text-align:right}
 .mini-bar-fill{height:100%;background:var(--accent);border-radius:2px}
 .foot-row td{background:var(--surface2);font-weight:600;color:var(--text)}
 
+/* ── Reason bucket chart (Not Delivered filter) ──────────────────── */
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;box-shadow:var(--card-shadow)}
+.chart-bars{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.chart-row{display:grid;grid-template-columns:160px 1fr 60px;align-items:center;gap:12px}
+.chart-label{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.chart-fill{height:100%;border-radius:4px;transition:width .9s cubic-bezier(.4,0,.2,1)}
+.chart-count{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text2);text-align:right}
+
+/* ── No Photos KPI card ───────────────────────────────────────────── */
+.no-photos-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:14px;padding:20px 22px;box-shadow:var(--card-shadow);display:flex;align-items:center;gap:18px}
+.no-photos-icon{font-size:28px;flex-shrink:0}
+.no-photos-val{font-size:36px;font-weight:800;letter-spacing:-1px;color:var(--amber)}
+.no-photos-label{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.no-photos-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
 /* ── Theme toggle & bottom-left controls ─────────────────────────── */
 .bottom-left{position:fixed;bottom:24px;left:24px;display:flex;flex-direction:column;gap:8px;z-index:100}
 .theme-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text2);font-size:17px;display:grid;place-items:center;box-shadow:var(--card-shadow);transition:all .2s}
@@ -157,11 +175,15 @@ td:last-child{padding-right:20px;text-align:right}
 .upload-msg{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
 .upload-actions{display:flex;gap:12px;flex-wrap:wrap}
 
+@media(max-width:900px){
+  div[style*="grid-template-columns:1fr 2fr"]{grid-template-columns:1fr !important}
+}
 @media(max-width:680px){
   .bucket-row{grid-template-columns:repeat(3,1fr)}
-  .bcard-n{font-size:20px}
+  .bcard-n{font-size:22px}
   .kpi-val{font-size:28px}
   .wrap{padding:0 14px 40px}
+  .chart-row{grid-template-columns:100px 1fr 50px}
 }
 </style>
 </head>
@@ -224,6 +246,30 @@ td:last-child{padding-right:20px;text-align:right}
         <div class="section-title">Hourly Buckets <span class="badge" id="bucket-label">QC PENDING</span></div>
       </div>
       <div class="bucket-row" id="buckets-overall"></div>
+    </div>
+
+    <!-- No Photos card + Reason Bucket chart (Not Delivered, non-null) -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Status Insights <span class="badge">NOT DELIVERED</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start">
+        <!-- No Photos card -->
+        <div class="no-photos-card">
+          <div class="no-photos-icon">📷</div>
+          <div>
+            <div class="no-photos-label">No Photos</div>
+            <div class="no-photos-val" id="no-photos-val">—</div>
+            <div class="no-photos-sub" id="no-photos-sub">status = No Photos</div>
+          </div>
+        </div>
+        <!-- Reason bucket chart -->
+        <div class="chart-section">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">Reason Bucket Distribution</div>
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-bottom:16px">Excluding null · Status = Not Delivered</div>
+          <div class="chart-bars" id="rb-chart-bars"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Type-wise table -->
@@ -296,22 +342,86 @@ function addBkt(obj, hrs) {
   }
 }
 
-// ── Render: big bucket cards ──────────────────────────────────────
+// ── Render: horizontal stat-bar bucket cards ─────────────────────
+const BCARD_COLORS = ['#4e7cff','#ffb03a','#a78bfa','#36d99a','#ff5b5b'];
 function renderBuckets(id, obj) {
   const el = document.getElementById(id);
   el.innerHTML = '';
   const mx = obj.total || 1;
-  BUCKETS.forEach(b => {
+  BUCKETS.forEach((b, i) => {
     const n = obj[b.key]||0, p = Math.round(n/mx*100);
+    const col = BCARD_COLORS[i];
     const d = document.createElement('div');
     d.className = 'bcard';
-    d.innerHTML = `<div class="bcard-fill" style="--fill:${b.fill}"></div>
-      <div class="bcard-range">${b.label}</div>
+    d.style.setProperty('--bcard-accent', col);
+    d.innerHTML = `
+      <div class="bcard-top">
+        <span class="bcard-range">${b.label}</span>
+        <span class="bcard-pct">${p}%</span>
+      </div>
       <div class="bcard-n">${n.toLocaleString()}</div>
-      <div class="bcard-pct">${p}%</div>`;
-    setTimeout(()=>d.querySelector('.bcard-fill').style.setProperty('--pct', p+'%'), 80);
+      <div class="bcard-bar"><div class="bcard-bar-fill"></div></div>`;
+    setTimeout(()=>d.querySelector('.bcard-bar-fill').style.setProperty('--pct', p+'%'), 80);
     el.appendChild(d);
   });
+}
+
+// ── Render: reason bucket horizontal bar chart ───────────────────
+const CHART_COLORS = ['#4e7cff','#ff5b5b','#ffb03a','#36d99a','#a78bfa','#38bdf8','#fb923c','#34d399'];
+function renderRBChart(rows) {
+  // Filter: status = 'Not Delivered', reason_bucket not null/empty
+  const filtered = rows.filter(r => {
+    const st = (r.status||'').trim().toLowerCase();
+    const rb = (r.rb||'').trim();
+    return st === 'not delivered' && rb && rb.toLowerCase() !== 'null' && rb !== '';
+  });
+
+  const rbMap = {};
+  filtered.forEach(r => {
+    const rb = r.rb.trim();
+    rbMap[rb] = (rbMap[rb]||0) + 1;
+  });
+
+  const entries = Object.entries(rbMap).sort((a,b)=>b[1]-a[1]);
+  const max = entries[0]?.[1] || 1;
+  const total = entries.reduce((s,[,n])=>s+n, 0);
+
+  const el = document.getElementById('rb-chart-bars');
+  if (!el) return;
+
+  if (entries.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;font-family:JetBrains Mono,monospace;color:var(--text3)">No data matching "Not Delivered" with non-null reason bucket</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map(([name, count], i) => {
+    const pct = Math.round(count/max*100);
+    const pctOfTotal = Math.round(count/total*100);
+    const col = CHART_COLORS[i % CHART_COLORS.length];
+    return `<div class="chart-row">
+      <div class="chart-label" title="${name}">${name}</div>
+      <div class="chart-track">
+        <div class="chart-fill" style="width:0%;background:${col}" data-w="${pct}"></div>
+      </div>
+      <div class="chart-count">${count.toLocaleString()} <span style="color:var(--text3);font-size:10px">(${pctOfTotal}%)</span></div>
+    </div>`;
+  }).join('');
+
+  // Animate bars after paint
+  setTimeout(() => {
+    el.querySelectorAll('.chart-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 100);
+}
+
+// ── Render: no-photos card ────────────────────────────────────────
+function renderNoPhotos(rows) {
+  const count = rows.filter(r => (r.status||'').trim().toLowerCase() === 'no photos').length;
+  const el = document.getElementById('no-photos-val');
+  const sub = document.getElementById('no-photos-sub');
+  if (el) el.textContent = count.toLocaleString();
+  if (sub) sub.textContent = `${count} VINs with no photos`;
 }
 
 // ── Render: generic bucket table ──────────────────────────────────
@@ -432,6 +542,10 @@ function processData(rows) {
     d.addEventListener('click', () => selectRB(name));
     rbEl.appendChild(d);
   });
+
+  // Render static sections (not affected by RB filter)
+  renderRBChart(rows);
+  renderNoPhotos(rows);
 
   // Default: show QC Pending
   const defaultRB = rbEntries.find(([n])=>n.toLowerCase()==='qc pending')?.[0] || rbEntries[0]?.[0];
