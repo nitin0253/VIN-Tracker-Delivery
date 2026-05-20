@@ -100,9 +100,12 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
 
 /* Reason bucket cards row */
 .rb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:36px}
-.rb-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .2s;box-shadow:var(--card-shadow)}
-.rb-card:hover,.rb-card.active{border-color:var(--accent);background:var(--accent-glow)}
-.rb-card.active .rb-val{color:var(--accent)}
+.rb-card{background:var(--surface);border:1px solid var(--border);border-top-width:2px;border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .2s;box-shadow:var(--card-shadow);user-select:none}
+.rb-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.3);border-color:var(--rb-color,var(--accent))}
+.rb-card.active{border-color:var(--rb-color,var(--accent)) !important;background:var(--accent-glow);box-shadow:0 0 0 1px var(--rb-color,var(--accent)),0 6px 24px rgba(0,0,0,.25)}
+.rb-card.active .rb-val{color:var(--rb-color,var(--accent))}
+.kpi{user-select:none}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.3)}
 .rb-name{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
 .rb-val{font-size:28px;font-weight:800;letter-spacing:-1px}
 .rb-pct{font-size:11px;color:var(--text3);margin-top:4px}
@@ -384,23 +387,33 @@ function dlTable(containerId, fmt, prefix) {
 }
 
 // ── Main process ──────────────────────────────────────────────────
+let _allRows = [];       // full dataset kept in memory
+let _activeRB = null;    // currently selected reason bucket (null = QC Pending default)
+
 function processData(rows) {
-  // --- Total KPI card ---
+  _allRows = rows;
+
+  // --- Total KPI card (always shows full dataset) ---
   const totalVins = new Set(rows.map(r=>r.vin).filter(Boolean)).size || rows.length;
-  document.getElementById('kpi-total-row').innerHTML = `
-    <div class="kpi" style="--kpi-color:var(--accent)">
+  const kpiEl = document.getElementById('kpi-total-row');
+  kpiEl.innerHTML = `
+    <div class="kpi" id="kpi-total-card" style="--kpi-color:var(--accent);cursor:pointer;transition:border-color .18s,box-shadow .18s"
+         title="Show all inventory">
       <div class="kpi-label">Total Inventory</div>
       <div class="kpi-val">${totalVins.toLocaleString()}</div>
-      <div class="kpi-sub">Unique VINs loaded</div>
+      <div class="kpi-sub">Click to see all buckets</div>
     </div>`;
+  document.getElementById('kpi-total-card').addEventListener('click', () => selectRB(null, true));
 
-  // --- Reason bucket cards ---
+  // --- Build reason bucket map ---
   const rbMap = {};
   rows.forEach(r => {
     const rb = (r.rb||'Unknown').trim();
     if (!rbMap[rb]) rbMap[rb] = 0;
     rbMap[rb]++;
   });
+
+  // --- Render reason bucket cards ---
   const rbColors = ['var(--accent)','var(--red)','var(--amber)','var(--green)','var(--purple)'];
   const rbEntries = Object.entries(rbMap).sort((a,b)=>b[1]-a[1]);
   const rbEl = document.getElementById('rb-cards');
@@ -410,55 +423,79 @@ function processData(rows) {
     const isQC = name.toLowerCase()==='qc pending';
     const d = document.createElement('div');
     d.className = 'rb-card' + (isQC?' active':'');
-    d.style.setProperty('--kpi-color', rbColors[i%rbColors.length]);
+    d.dataset.rb = name;
+    d.style.setProperty('--rb-color', rbColors[i%rbColors.length]);
+    d.style.cssText += `;border-top:2px solid ${rbColors[i%rbColors.length]};`;
     d.innerHTML = `<div class="rb-name">${name}</div>
       <div class="rb-val">${count.toLocaleString()}</div>
       <div class="rb-pct">${pct}% of total</div>`;
+    d.addEventListener('click', () => selectRB(name));
     rbEl.appendChild(d);
   });
 
-  // --- Filter QC Pending ---
-  const qc = rows.filter(r => (r.rb||'').trim().toLowerCase() === 'qc pending');
-  console.log('[QC] QC Pending:', qc.length, '/', rows.length);
+  // Default: show QC Pending
+  const defaultRB = rbEntries.find(([n])=>n.toLowerCase()==='qc pending')?.[0] || rbEntries[0]?.[0];
+  _activeRB = defaultRB;
+  renderFiltered(defaultRB);
+}
 
-  if (qc.length === 0) {
-    showBanner('warn', `No "QC Pending" rows found. Unique reason_bucket values: ${Object.keys(rbMap).map(v=>`"${v}"`).join(', ')||'(empty)'}<br><a href="${DEBUG}" target="_blank">→ /api/data?debug=1</a>`);
-  }
+// ── Select a reason bucket and re-render everything ───────────────
+function selectRB(name, showAll = false) {
+  _activeRB = showAll ? '__ALL__' : name;
 
-  // Update bucket label
-  document.getElementById('bucket-label').textContent = `QC PENDING (${qc.length.toLocaleString()})`;
+  // Update card active states
+  document.querySelectorAll('.rb-card').forEach(c => {
+    c.classList.toggle('active', !showAll && c.dataset.rb === name);
+  });
+  const totalCard = document.getElementById('kpi-total-card');
+  if (totalCard) totalCard.style.borderColor = showAll ? 'var(--accent)' : '';
 
-  // --- Overall hourly buckets ---
+  renderFiltered(_activeRB);
+}
+
+function renderFiltered(activeRB) {
+  const rows = _allRows;
+  const filtered = activeRB === '__ALL__'
+    ? rows
+    : rows.filter(r => (r.rb||'Unknown').trim() === activeRB);
+
+  const label = activeRB === '__ALL__' ? 'ALL' : (activeRB||'').toUpperCase();
+  document.getElementById('bucket-label').textContent = `${label} (${filtered.length.toLocaleString()})`;
+
+  // Hourly buckets
   const overall = mkBkt();
-  qc.forEach(r => addBkt(overall, r.hrs));
+  filtered.forEach(r => addBkt(overall, r.hrs));
   renderBuckets('buckets-overall', overall);
 
-  // --- Type-wise breakdown ---
+  // Type-wise
   const typeMap = {};
-  qc.forEach(r => {
+  filtered.forEach(r => {
     const t = (r.type||'Unknown').trim();
     if (!typeMap[t]) typeMap[t] = { name:t, ...mkBkt() };
     addBkt(typeMap[t], r.hrs);
   });
   const typeData = Object.values(typeMap).sort((a,b)=>b.total-a.total);
   _tableData['dl-type'] = typeData;
-  makeDlBtns('dl-type', ()=>typeData, 'type-breakdown');
+  makeDlBtns('dl-type', ()=>typeData, `type-${label.toLowerCase()}`);
   renderBktTable('type-tbody', typeData, 'name');
 
-  // --- Enterprise top 10 ---
+  // Enterprise top 10
   const entMap = {};
-  qc.forEach(r => {
+  filtered.forEach(r => {
     const e = (r.eid||'Unknown').trim();
     if (!entMap[e]) entMap[e] = { name:e, ...mkBkt() };
     addBkt(entMap[e], r.hrs);
   });
   const entData = Object.values(entMap).sort((a,b)=>b.total-a.total).slice(0,10);
   _tableData['dl-ent'] = entData;
-  makeDlBtns('dl-ent', ()=>entData, 'top10-enterprises');
+  makeDlBtns('dl-ent', ()=>entData, `top10-${label.toLowerCase()}`);
   renderBktTable('ent-tbody', entData, 'name');
 
   // Status pill
-  document.getElementById('status-text').textContent = `${qc.length.toLocaleString()} QC Pending`;
+  document.getElementById('status-text').textContent =
+    activeRB === '__ALL__'
+      ? `${filtered.length.toLocaleString()} Total`
+      : `${filtered.length.toLocaleString()} · ${activeRB}`;
 }
 
 // ── Banners ───────────────────────────────────────────────────────
