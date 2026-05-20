@@ -211,10 +211,7 @@ td:last-child{padding-right:16px;text-align:right}
     <div class="sec">
       <div class="sec-hd">
         <div class="sec-title">Hourly Breakdown <span class="badge" id="bkt-lbl">VIN CREATION</span></div>
-        <div style="display:flex;gap:6px">
-          <button class="btn" id="btn-vc" onclick="switchBktMode('vc')" style="font-size:11px;padding:5px 10px">VIN Creation</button>
-          <button class="btn" id="btn-rv" onclick="switchBktMode('rv')" style="font-size:11px;padding:5px 10px">Received At</button>
-        </div>
+
       </div>
       <div class="brow" id="bkts"></div>
     </div>
@@ -315,7 +312,7 @@ const BUCKETS = [
 const COLORS=['#4e7cff','#f05050','#f5a623','#2dd4a0','#9f7aea','#33b5e5','#f472b6','#fb923c','#34d399','#60a5fa'];
 
 // ── STATE ────────────────────────────────────────────────────────
-let _rows=[], _activeRB=null, _activeType=null, _bktMode='vc', _drawerRows=[], _tblData={};
+let _rows=[], _activeRB=null, _activeType=null, _bktMode='rv', _drawerRows=[], _tblData={};
 
 function mkBkt(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
 function addBkt(o,h){ if(h==null)return; for(const b of BUCKETS){if(h>=b.min&&h<=b.max){o[b.key]++;o.total++;return;}} }
@@ -375,11 +372,7 @@ function renderBuckets(){
     setTimeout(()=>d.querySelector('.bc-fill').style.width=p+'%',80);
     el.appendChild(d);
   });
-  const lbl=_bktMode==='vc'?'VIN CREATION':'RECEIVED AT';
-  document.getElementById('bkt-lbl').textContent=`${lbl} · ${activeLabel()}`;
-  // highlight active mode btn
-  document.getElementById('btn-vc').className='btn'+((_bktMode==='vc')?' btn-p':'');
-  document.getElementById('btn-rv').className='btn'+((_bktMode==='rv')?' btn-p':'');
+  document.getElementById('bkt-lbl').textContent=`RECEIVED AT · ${activeLabel()}`;
 }
 
 function switchBktMode(m){ _bktMode=m; renderBuckets(); }
