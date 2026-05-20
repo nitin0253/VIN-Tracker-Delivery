@@ -339,7 +339,7 @@ td:last-child{padding-right:18px;text-align:right}
       <div class="dl-strip" id="dl-ent"></div>
     </div>
     <div class="tbl-shell"><div class="tbl-scroll"><table>
-      <thead><tr><th># Enterprise</th><th>Stage</th><th>0–4h</th><th>5–8h</th><th>9–12h</th><th>13–24h</th><th>24+h</th><th>Total</th></tr></thead>
+      <thead><tr><th># Enterprise</th><th>Stage</th><th>0–4h</th><th>4–8h</th><th>8–12h</th><th>12–24h</th><th>24+h</th><th>Total</th></tr></thead>
       <tbody id="ent-tbody"></tbody>
     </table></div></div>
   </div>
@@ -351,7 +351,7 @@ td:last-child{padding-right:18px;text-align:right}
       <div class="dl-strip" id="dl-team"></div>
     </div>
     <div class="tbl-shell"><div class="tbl-scroll"><table>
-      <thead><tr><th># Team</th><th>Type</th><th>0–4h</th><th>5–8h</th><th>9–12h</th><th>13–24h</th><th>24+h</th><th>Total</th></tr></thead>
+      <thead><tr><th># Team</th><th>Type</th><th>0–4h</th><th>4–8h</th><th>8–12h</th><th>12–24h</th><th>24+h</th><th>Total</th></tr></thead>
       <tbody id="team-tbody"></tbody>
     </table></div></div>
   </div>
@@ -363,7 +363,7 @@ td:last-child{padding-right:18px;text-align:right}
       <div class="dl-strip" id="dl-poc"></div>
     </div>
     <div class="tbl-shell"><div class="tbl-scroll"><table>
-      <thead><tr><th># POC Email</th><th>0–4h</th><th>5–8h</th><th>9–12h</th><th>13–24h</th><th>24+h</th><th>Total</th></tr></thead>
+      <thead><tr><th># POC Email</th><th>0–4h</th><th>4–8h</th><th>8–12h</th><th>12–24h</th><th>24+h</th><th>Total</th></tr></thead>
       <tbody id="poc-tbody"></tbody>
     </table></div></div>
   </div>
@@ -393,11 +393,11 @@ td:last-child{padding-right:18px;text-align:right}
 // ── CONFIG ───────────────────────────────────────────────────────
 const API = '/api/data';
 const BKTS = [
-  {l:'0–4h', k:'b0', min:0,  max:4,  c:'#5c7cfa'},
-  {l:'5–8h', k:'b5', min:5,  max:8,  c:'#f5a623'},
-  {l:'9–12h',k:'b9', min:9,  max:12, c:'#b48fff'},
-  {l:'13–24h',k:'b13',min:13,max:24, c:'#00e5a0'},
-  {l:'24+h', k:'b24',min:25, max:9e9,c:'#f0516e'},
+  {l:'0–4h',  k:'b0',  min:0,  max:4,  c:'#5c7cfa'},
+  {l:'4–8h',  k:'b5',  min:4,  max:8,  c:'#f5a623'},
+  {l:'8–12h', k:'b9',  min:8,  max:12, c:'#b48fff'},
+  {l:'12–24h',k:'b13', min:12, max:24, c:'#00e5a0'},
+  {l:'24+h',  k:'b24', min:24, max:9e9,c:'#f0516e'},
 ];
 const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9','#fbbf24'];
 
@@ -405,7 +405,7 @@ const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472
 let _rows=[], _ents=[], _entMap={}, _activeType=null, _drawerRows=[], _tblData={};
 
 function mkB(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
-function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&h<=b.max){o[b.k]++;o.total++;return;}} }
+function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
 function f(){ return _activeType ? _rows.filter(r=>(r.type||'').trim()===_activeType) : _rows; }
 function lbl(){ return _activeType ? _activeType : 'ALL'; }
 
