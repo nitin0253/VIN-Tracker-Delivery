@@ -286,7 +286,7 @@ td:last-child{padding-right:18px;text-align:right}
   <div class="hdr-actions">
     <span class="sync-time" id="sy"></span>
     <button class="icon-btn" id="tbtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-    <div class="refresh-ring" title="Auto-refresh in 30 min">
+    <div class="refresh-ring" title="Auto-refresh in 15 min">
       <svg viewBox="0 0 34 34" width="34" height="34">
         <circle class="refresh-ring-bg" cx="17" cy="17" r="14" />
         <circle class="refresh-ring-fill" id="ring-fill" cx="17" cy="17" r="14"
@@ -773,7 +773,7 @@ function handleUpload(evt){
 }
 
 // ── AUTO-REFRESH (30 min) ────────────────────────────────────────
-const AUTO_REFRESH_MS = 30 * 60 * 1000;
+const AUTO_REFRESH_MS = 15 * 60 * 1000;
 let _refreshStart = Date.now();
 let _refreshTimer = null;
 const RING_CIRC = 87.96; // 2π × 14
