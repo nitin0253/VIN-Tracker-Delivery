@@ -381,7 +381,7 @@ function renderStatusCards(rows){
   allCard.innerHTML = `<div class="sc-label">All</div>
     <div class="sc-val">${rows.length.toLocaleString()}</div>
     <div class="sc-sub">Total VINs</div>`;
-  allCard.onclick = ()=>selectStatus(null);
+  allCard.onclick = (e)=>{e.stopPropagation();selectStatus(null);};
   el.appendChild(allCard);
 
   entries.forEach(([name,count],i)=>{
@@ -393,7 +393,7 @@ function renderStatusCards(rows){
     d.innerHTML = `<div class="sc-label">${name}</div>
       <div class="sc-val">${count.toLocaleString()}</div>
       <div class="sc-sub">${pct}% of total</div>`;
-    d.onclick = ()=>selectStatus(name);
+    d.onclick = (e)=>{e.stopPropagation();selectStatus(name);};
     el.appendChild(d);
   });
 }
@@ -417,7 +417,7 @@ function renderRBCards(filtered){
   allRBC.innerHTML = `<div class="rbc-label">All</div>
     <div class="rbc-val">${filtered.length.toLocaleString()}</div>
     <div class="rbc-sub">All reason buckets</div>`;
-  allRBC.onclick = ()=>selectRB(null);
+  allRBC.onclick = (e)=>{e.stopPropagation();selectRB(null);};
   el.appendChild(allRBC);
 
   entries.forEach(([name,count],i)=>{
@@ -430,7 +430,7 @@ function renderRBCards(filtered){
     d.innerHTML = `<div class="rbc-label">${name}</div>
       <div class="rbc-val">${count.toLocaleString()}</div>
       <div class="rbc-sub">${pct}%</div>`;
-    d.onclick = ()=>selectRB(name);
+    d.onclick = (e)=>{e.stopPropagation();selectRB(name);};
     el.appendChild(d);
   });
 }
@@ -499,7 +499,7 @@ function renderBktTable(tbodyId, data, isRanked=false){
           <div class="mbar-track"><div class="mbar-fill" style="width:${pct}%;background:${b.col}"></div></div></div></td>`;
       }).join('')}
       <td><span class="chip">${(row.total||0).toLocaleString()}</span></td>`;
-    tr.onclick=()=>openDrawer(row.name, row._rows||[], tbodyId);
+    tr.onclick=(e)=>{ e.stopPropagation(); if((row._rows||[]).length>0) openDrawer(row.name, row._rows, tbodyId); };
     tbody.appendChild(tr);
   });
   // Subtotal
@@ -507,6 +507,7 @@ function renderBktTable(tbodyId, data, isRanked=false){
   data.forEach(r=>{ BUCKETS.forEach(b=>{ tot[b.key]=(tot[b.key]||0)+(r[b.key]||0); }); tot.total+=r.total||0; });
   const tf=document.createElement('tr');
   tf.className='foot-row';
+  tf.style.cursor='default';
   tf.innerHTML=`<td><strong>Subtotal</strong></td>
     ${BUCKETS.map(b=>`<td>${(tot[b.key]||0).toLocaleString()}</td>`).join('')}
     <td><span class="chip">${tot.total.toLocaleString()}</span></td>`;
