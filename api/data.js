@@ -1,9 +1,7 @@
 let cache = null;
 let lastFetch = 0;
 const CACHE_TTL = 5 * 60 * 1000;
-
-const METABASE_URL =
-  "https://metabase.spyne.ai/public/question/e45c301d-aa55-4df8-a804-51ec721b6f26.csv";
+const METABASE_URL = "https://metabase.spyne.ai/public/question/7f434e89-1ab4-43e9-8633-841e7076d2f7.csv";
 
 function splitRow(row) {
   const out = []; let cur = '', q = false;
@@ -34,53 +32,53 @@ function pick(r, ...names) {
   return '';
 }
 
+function hoursAgo(ts, now) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d)) return null;
+  const h = (now - d) / 3600000;
+  return h >= 0 ? h : null;
+}
+
 async function buildCache() {
   if (cache && Date.now() - lastFetch < CACHE_TTL) return cache;
   const resp = await fetch(METABASE_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } });
   if (!resp.ok) throw new Error(`Metabase ${resp.status}`);
   const raw = parseCSV(await resp.text());
   const cols = raw.length ? Object.keys(raw[0]) : [];
-
   const now = Date.now();
 
-  const rows = raw.map(r => {
-    // Compute hours from vinCreation for primary bucketing
-    const vcStr = pick(r, 'vinCreation', 'vin_creation', 'created_at');
-    let hrsVc = null;
-    if (vcStr) {
-      const d = new Date(vcStr);
-      if (!isNaN(d)) { const h = (now - d) / 3600000; if (h >= 0) hrsVc = h; }
-    }
-
-    // Also compute from receivedAt as fallback
-    let hrsRecv = null;
-    const recvStr = pick(r, 'receivedAt', 'received_at');
-    const sentStr = pick(r, 'sentAt', 'sent_at');
-    const a24 = pick(r, 'after_24_hrs', 'after24hrs').toLowerCase();
-    if (a24 === 'true' || a24 === '1' || a24 === 'yes') { hrsRecv = 25; }
-    else {
-      for (const ts of [recvStr, sentStr]) {
-        if (!ts) continue;
-        const d = new Date(ts);
-        if (!isNaN(d)) { const h = (now - d) / 3600000; if (h >= 0) { hrsRecv = h; break; } }
-      }
-    }
-
-    return {
-      eid:    pick(r, 'enterpriseId', 'enterprise_id', 'EnterpriseId'),
-      ename:  pick(r, 'enterprise_name', 'enterpriseName', 'enterpriseId', 'enterprise_id'),
-      team:   pick(r, 'apd.team_name', 'team_name', 'teamName', 'teamId', 'team_id'),
-      vin:    pick(r, 'vinName', 'vin_name', 'VinName', 'vin'),
-      rb:     pick(r, 'reason_bucket', 'reasonBucket', 'reason bucket'),
-      type:   pick(r, 'type', 'Type', 'platform', 'Platform'),
-      status: pick(r, 'status', 'Status', 'status_overallStatus', 'overallStatus'),
-      cspoc:  pick(r, 'cs_poc_email', 'csPocEmail', 'POC_CS', 'poc_cs'),
-      obpoc:  pick(r, 'ob_poc_email', 'obPocEmail', 'POC_OB', 'poc_ob'),
-      aepoc:  pick(r, 'ae_poc_email', 'aePocEmail'),
-      hrsVc,   // hours from vinCreation
-      hrsRecv, // hours from receivedAt/sentAt
-    };
-  });
+  const rows = raw.map(r => ({
+    dealerVinId:  pick(r, 'dvm.dealerVinId', 'dealerVinId'),
+    eid:          pick(r, 'dvm.enterpriseId', 'enterpriseId'),
+    teamId:       pick(r, 'dvm.teamId', 'teamId'),
+    vin:          pick(r, 'vinName'),
+    make:         pick(r, 'dvm.make', 'make'),
+    model:        pick(r, 'dvm.model', 'model'),
+    year:         pick(r, 'year'),
+    trim:         pick(r, 'trim'),
+    stock:        pick(r, 'stockNumber'),
+    outputImgs:   pick(r, 'output_image_count'),
+    price:        pick(r, 'sellingPrice'),
+    platform:     pick(r, 'platform'),
+    imgCount:     pick(r, 'image_count'),
+    vidCount:     pick(r, 'video_count'),
+    status:       pick(r, 'status_overallStatus'),
+    vinCreation:  pick(r, 'vinCreation'),
+    receivedAt:   pick(r, 'receivedAt'),
+    sentAt:       pick(r, 'sentAt'),
+    rb:           pick(r, 'reason_bucket'),
+    holdReason:   pick(r, 'hold_reason'),
+    thumbnail:    pick(r, 'thumbnail_url'),
+    vdpUrl:       pick(r, 'vdp_url'),
+    ename:        pick(r, 'enterprise_name'),
+    team:         pick(r, 'apd.team_name', 'team_name'),
+    type:         pick(r, 'type'),
+    teamType:     pick(r, 'team_type'),
+    poc:          pick(r, 'poc_email'),
+    hrsVc:        hoursAgo(pick(r, 'vinCreation'), now),
+    hrsRecv:      hoursAgo(pick(r, 'receivedAt'), now),
+  }));
 
   cache = { rows, cols, total: rows.length, lastSynced: now };
   lastFetch = now;
@@ -97,9 +95,9 @@ export default async function handler(req, res) {
     if (req.query.debug === '1') {
       return res.status(200).json({
         totalRows: data.total, cols: data.cols, sampleRow: data.rows[0],
-        uniqueStatus: [...new Set(data.rows.map(r => r.status).filter(Boolean))],
-        uniqueRB:     [...new Set(data.rows.map(r => r.rb).filter(Boolean))],
-        uniqueType:   [...new Set(data.rows.map(r => r.type).filter(Boolean))],
+        uniqueRB:   [...new Set(data.rows.map(r => r.rb).filter(Boolean))],
+        uniqueType: [...new Set(data.rows.map(r => r.type).filter(Boolean))],
+        uniquePoc:  [...new Set(data.rows.map(r => r.poc).filter(Boolean))].slice(0,10),
       });
     }
     res.status(200).json({ rows: data.rows, total: data.total, lastSynced: new Date(data.lastSynced).toISOString() });
