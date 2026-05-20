@@ -249,7 +249,7 @@ td:last-child{padding-right:18px;text-align:right}
 .refresh-ring circle{fill:none;stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
 .refresh-ring-bg{stroke:var(--rim)}
 .refresh-ring-fill{stroke:var(--green)}
-.refresh-ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--t3);font-weight:700}
+.refresh-ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;font-family:'JetBrains Mono',monospace;color:var(--t3);font-weight:700;letter-spacing:-.5px}
 
 /* Perf flash on load */
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -787,22 +787,22 @@ function startAutoRefresh() {
     if (Date.now() - _refreshStart >= AUTO_REFRESH_MS) {
       loadData();
     }
-  }, 10000); // update ring every 10s
+  }, 1000); // update every second for real-time mm:ss
 }
 
 function updateRing() {
   const elapsed = Date.now() - _refreshStart;
   const progress = Math.min(elapsed / AUTO_REFRESH_MS, 1);
-  const remaining = AUTO_REFRESH_MS - elapsed;
+  const remaining = Math.max(AUTO_REFRESH_MS - elapsed, 0);
   const ring = document.getElementById('ring-fill');
   const label = document.getElementById('ring-label');
   if (!ring || !label) return;
-  // Dashoffset: 0 = full circle, CIRC = empty
   ring.style.strokeDashoffset = (RING_CIRC * progress).toFixed(2);
-  const mins = Math.ceil(remaining / 60000);
-  const secs = Math.ceil((remaining % 60000) / 1000);
-  label.textContent = mins > 0 ? mins + 'm' : secs + 's';
-  // Turn red when under 1 min
+  // Real-time mm:ss format
+  const totalSecs = Math.ceil(remaining / 1000);
+  const mm = String(Math.floor(totalSecs / 60)).padStart(2, '0');
+  const ss = String(totalSecs % 60).padStart(2, '0');
+  label.textContent = mm + ':' + ss;
   ring.style.stroke = remaining < 60000 ? 'var(--red)' : 'var(--green)';
 }
 
