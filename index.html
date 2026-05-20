@@ -112,13 +112,13 @@ button{font-family:'Outfit',sans-serif;cursor:pointer}
 
 /* ── Bucket bar cards ────────────────────────────────────────────── */
 .bucket-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.bcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 14px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 14px 16px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
 .bcard:hover{border-color:var(--border2)}
-.bcard-fill{position:absolute;bottom:0;left:0;right:0;height:var(--pct,0%);background:var(--fill,rgba(78,124,255,.07));transition:height .9s cubic-bezier(.4,0,.2,1);z-index:0}
+.bcard-fill{position:absolute;bottom:0;left:0;right:0;height:var(--pct,0%);max-height:60%;background:var(--fill,rgba(78,124,255,.07));transition:height .9s cubic-bezier(.4,0,.2,1);z-index:0;pointer-events:none}
 .bcard>*{position:relative;z-index:1}
-.bcard-range{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-bottom:8px}
-.bcard-n{font-size:26px;font-weight:800;letter-spacing:-1px}
-.bcard-pct{font-size:11px;color:var(--text3);margin-top:4px}
+.bcard-range{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);letter-spacing:.5px;margin-bottom:10px}
+.bcard-n{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.bcard-pct{font-size:11px;color:var(--text3);margin-top:6px}
 
 /* ── Table ───────────────────────────────────────────────────────── */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)}
