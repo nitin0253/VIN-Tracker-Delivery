@@ -216,12 +216,6 @@ td:last-child{padding-right:16px;text-align:right}
       <div class="brow" id="bkts"></div>
     </div>
 
-    <!-- REASON BUCKET FILTER CARDS -->
-    <div class="sec">
-      <div class="sec-hd"><div class="sec-title">Reason Bucket <span class="badge" id="rb-badge">FILTER</span></div></div>
-      <div class="fcard-grid" id="rb-cards"></div>
-    </div>
-
     <!-- TYPE FILTER CARDS -->
     <div class="sec">
       <div class="sec-hd"><div class="sec-title">Type <span class="badge" id="type-badge">FILTER</span></div></div>
@@ -554,9 +548,6 @@ function rerender(){
   const lbl=activeLabel();
 
   // Sync active states on filter cards
-  document.querySelectorAll('#rb-cards .fcard').forEach(c=>{
-    c.classList.toggle('active', c.dataset.key ? c.dataset.key===_activeRB : _activeRB===null);
-  });
   document.querySelectorAll('#type-cards .fcard').forEach(c=>{
     c.classList.toggle('active', c.dataset.key ? c.dataset.key===_activeType : _activeType===null);
   });
@@ -604,7 +595,6 @@ function rerender(){
 function processData(rows){
   _rows=rows; _activeRB=null; _activeType=null;
   renderKPIs(rows);
-  renderFilterCards('rb-cards',   rows, r=>r.rb,   _activeRB,   v=>{_activeRB=v;rerender();}, 'rb-badge');
   renderFilterCards('type-cards', rows, r=>r.type, _activeType, v=>{_activeType=v;rerender();}, 'type-badge');
   rerender();
 }
