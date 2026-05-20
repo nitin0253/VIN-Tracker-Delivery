@@ -54,6 +54,7 @@ async function buildCache() {
     vin:    pick(r, 'vinName','vin_name','VinName','vin'),
     rb:     pick(r, 'reason_bucket','reasonBucket','reason bucket'),  // reason_bucket
     type:   pick(r, 'platform','Platform','type','Type'),              // "type" = platform
+    status: pick(r, 'status','Status','status_overallStatus','overallStatus'),
     a24:    pick(r, 'after_24_hrs','after24hrs'),
     recv:   pick(r, 'receivedAt','received_at'),
     sent:   pick(r, 'sentAt','sent_at'),
