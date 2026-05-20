@@ -15,20 +15,20 @@
   --f-mono:'Space Mono',monospace;
 }
 [data-theme="dark"]{
-  --bg:#1b1b1c;
-  --panel:#0e1018;
-  --card:#121520;
-  --card2:#171b28;
-  --rim:#1e2235;
-  --rim2:#252b42;
-  --t1:#f0f2ff;--t2:#8892b8;--t3:#3d4565;
+  --bg:#1a1a1a;
+  --panel:#1a1a1a;
+  --card:#252525;
+  --card2:#2e2e2e;
+  --rim:#333333;
+  --rim2:#404040;
+  --t1:#f0f0f0;--t2:#a0a0a0;--t3:#606060;
   --accent:#5c7cfa;
   --ag:rgba(92,124,250,.12);
   --ag2:rgba(92,124,250,.06);
-  --red:#f0516e;--amber:#f5a623;--green:#00e5a0;--purple:#b48fff;--teal:#2dd4cf;--pink:#f472b6;
-  --glow:0 0 0 1px rgba(92,124,250,.35),0 8px 32px rgba(92,124,250,.15);
-  --sh:0 1px 3px rgba(0,0,0,.6),0 4px 16px rgba(0,0,0,.4);
-  --sh2:0 2px 8px rgba(0,0,0,.7),0 12px 40px rgba(0,0,0,.5);
+  --red:#f0516e;--amber:#f5a623;--green:#00c896;--purple:#b48fff;--teal:#2dd4cf;--pink:#f472b6;
+  --glow:0 0 0 1px rgba(92,124,250,.3),0 6px 24px rgba(0,0,0,.4);
+  --sh:0 1px 2px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);
+  --sh2:0 2px 6px rgba(0,0,0,.6),0 8px 24px rgba(0,0,0,.4);
 }
 [data-theme="light"]{
   --bg:#f4f5fa;
@@ -56,15 +56,14 @@ body{font-family:var(--f-display);background:var(--bg);color:var(--t1);min-heigh
 button{font-family:var(--f-display);cursor:pointer;border:none;background:none}
 a{color:inherit;text-decoration:none}
 
-/* Noise texture overlay */
-body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+/* Clean bg, no texture */
 
 .page{max-width:1480px;margin:0 auto;padding:0 28px 100px;position:relative;z-index:1}
 
 /* ═══════════════════════════════════════════════════
    HEADER — editorial strip
 ═══════════════════════════════════════════════════ */
-.hdr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;padding:22px 0 18px;border-bottom:1px solid var(--rim);margin-bottom:32px}
+.hdr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;padding:22px 0 18px;border-bottom:1px solid var(--rim);margin-bottom:32px;background:var(--bg)}
 .hdr-brand{display:flex;align-items:center;gap:12px}
 .logo-mark{width:34px;height:34px;background:var(--accent);border-radius:7px;display:grid;place-items:center;flex-shrink:0;position:relative;overflow:hidden}
 .logo-mark::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.2) 0%,transparent 60%)}
@@ -98,7 +97,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
 .sec{margin-bottom:36px}
 .sec-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .sec-label{display:flex;align-items:center;gap:10px}
-.sec-title{font-size:13px;font-weight:700;letter-spacing:-.2px}
+.sec-title{font-size:14px;font-weight:700;letter-spacing:-.3px}
 .tag{display:inline-block;font-size:8px;font-family:var(--f-mono);padding:2px 8px;border-radius:4px;letter-spacing:1px;text-transform:uppercase}
 .tag-blue{background:var(--ag);border:1px solid rgba(92,124,250,.25);color:var(--accent)}
 .tag-red{background:rgba(240,81,110,.1);border:1px solid rgba(240,81,110,.25);color:var(--red)}
@@ -111,9 +110,9 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
    METRIC CARDS (top strip)
 ═══════════════════════════════════════════════════ */
 .metric-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.metric{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s}
+.metric{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s}
 .metric:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
-.metric-accent{position:absolute;top:0;left:0;right:0;height:2px;background:var(--mc,var(--accent))}
+.metric-accent{display:none}
 .metric-icon{font-size:20px;margin-bottom:8px;line-height:1}
 .metric-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
 .metric-label{font-size:9px;font-family:var(--f-mono);color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-top:6px}
@@ -123,7 +122,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
    HOURLY BREAKDOWN — big dramatic cards
 ═══════════════════════════════════════════════════ */
 .hour-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.hcard{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all .2s;cursor:default}
+.hcard{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all .2s;cursor:default}
 .hcard:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
 .hcard-bg{position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--hc,var(--accent)) 0%,transparent 70%);opacity:.12;pointer-events:none}
 .hcard-range{font-size:9px;font-family:var(--f-mono);color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
@@ -136,7 +135,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
    FILTER CARDS (Type)
 ═══════════════════════════════════════════════════ */
 .filter-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-.fcard{background:var(--card);border:1px solid var(--rim);border-radius:11px;padding:14px 16px;cursor:pointer;user-select:none;transition:all .18s;box-shadow:var(--sh);position:relative;overflow:hidden}
+.fcard{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:14px 16px;cursor:pointer;user-select:none;transition:all .18s;box-shadow:var(--sh);position:relative;overflow:hidden}
 .fcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fc,var(--accent));border-radius:11px 0 0 11px}
 .fcard:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--fc,var(--accent))}
 .fcard.active{border-color:var(--fc,var(--accent));background:var(--ag2);box-shadow:var(--glow)}
@@ -149,7 +148,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
    CHARTS — side by side
 ═══════════════════════════════════════════════════ */
 .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.chart-panel{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:20px 22px;box-shadow:var(--sh)}
+.chart-panel{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 22px;box-shadow:var(--sh)}
 .chart-panel-title{font-size:12px;font-weight:700;margin-bottom:2px;letter-spacing:-.2px}
 .chart-panel-sub{font-size:9px;font-family:var(--f-mono);color:var(--t3);margin-bottom:16px;letter-spacing:.5px}
 .bar-list{display:flex;flex-direction:column;gap:9px}
@@ -162,13 +161,13 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
 /* ═══════════════════════════════════════════════════
    TABLES
 ═══════════════════════════════════════════════════ */
-.tbl-shell{background:var(--card);border:1px solid var(--rim);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+.tbl-shell{background:var(--card);border:1px solid var(--rim);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
 .tbl-scroll{overflow-y:auto;max-height:400px}
 .tbl-scroll::-webkit-scrollbar{width:3px}
 .tbl-scroll::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:2px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead{position:sticky;top:0;z-index:3}
-thead tr{background:var(--card2);border-bottom:1px solid var(--rim)}
+thead tr{background:var(--card2);border-bottom:1px solid var(--rim2)}
 th{padding:10px 14px;text-align:left;font-family:var(--f-mono);font-size:8px;font-weight:400;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
 th:first-child{padding-left:18px}
 th:last-child{padding-right:18px;text-align:right}
@@ -230,7 +229,7 @@ td:last-child{padding-right:18px;text-align:right}
 /* ═══════════════════════════════════════════════════
    UPLOAD FALLBACK
 ═══════════════════════════════════════════════════ */
-#uf{display:none;background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:28px 32px;margin-bottom:28px}
+#uf{display:none;background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:28px 32px;margin-bottom:28px}
 .uf-title{font-size:15px;font-weight:700;margin-bottom:6px}
 .uf-msg{font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.6}
 .uf-btns{display:flex;gap:10px;flex-wrap:wrap}
