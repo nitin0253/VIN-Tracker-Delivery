@@ -22,7 +22,7 @@
   --card2:#2e2e2e;
   --rim:#333333;
   --rim2:#404040;
-  --t1:#f0f0f0;--t2:#a0a0a0;--t3:#606060;
+  --t1:#ffffff;--t2:#cccccc;--t3:#888888;
   --accent:#5c7cfa;
   --ag:rgba(92,124,250,.12);
   --ag2:rgba(92,124,250,.06);
@@ -120,19 +120,21 @@ a{color:inherit;text-decoration:none}
 .metric-accent{display:none}
 .metric-icon{font-size:20px;margin-bottom:8px;line-height:1}
 .metric-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
-.metric-label{font-size:9px;font-family:var(--f-mono);color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-top:6px}
-.metric-sub{font-size:10px;color:var(--t3);margin-top:3px}
+.metric-label{font-size:9px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:1.2px;margin-top:6px}
+.metric-sub{font-size:10px;color:var(--t2);margin-top:3px}
 
 /* ═══════════════════════════════════════════════════
    HOURLY BREAKDOWN — big dramatic cards
 ═══════════════════════════════════════════════════ */
 .hour-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.hcard{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all .2s;cursor:default}
-.hcard:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.hcard{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all .2s;cursor:pointer;user-select:none}
+.hcard:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--hc,var(--accent))}
+.hcard.active{border-color:var(--hc,var(--accent));border-width:2px;background:var(--ag2);box-shadow:0 0 0 1px var(--hc,var(--accent)),0 4px 16px rgba(0,0,0,.3)}
+.hcard.active .hcard-n{color:var(--hc,var(--accent))}
 .hcard-bg{position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--hc,var(--accent)) 0%,transparent 70%);opacity:.12;pointer-events:none}
 .hcard-range{font-size:9px;font-family:var(--f-mono);color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
 .hcard-n{font-size:36px;font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;color:var(--hc,var(--t1))}
-.hcard-pct{font-size:10px;font-family:var(--f-mono);color:var(--t3);margin-top:6px}
+.hcard-pct{font-size:10px;font-family:var(--f-mono);color:var(--t2);margin-top:6px}
 .hcard-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--rim)}
 .hcard-bar-fill{height:100%;width:0%;background:var(--hc,var(--accent));transition:width 1s cubic-bezier(.4,0,.2,1)}
 
@@ -147,7 +149,7 @@ a{color:inherit;text-decoration:none}
 .fcard.active .fc-val{color:var(--fc,var(--accent))}
 .fc-name{font-size:9px;font-family:var(--f-mono);color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fc-val{font-size:24px;font-weight:800;letter-spacing:-1px;padding-left:6px;font-variant-numeric:tabular-nums}
-.fc-sub{font-size:9px;color:var(--t3);padding-left:6px;margin-top:3px}
+.fc-sub{font-size:9px;color:var(--t2);padding-left:6px;margin-top:3px}
 
 /* ═══════════════════════════════════════════════════
    CHARTS — side by side
@@ -173,7 +175,11 @@ a{color:inherit;text-decoration:none}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead{position:sticky;top:0;z-index:3}
 thead tr{background:var(--card2);border-bottom:1px solid var(--rim2)}
-th{padding:10px 14px;text-align:left;font-family:var(--f-mono);font-size:8px;font-weight:400;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+th{padding:10px 14px;text-align:left;font-family:var(--f-mono);font-size:8px;font-weight:400;color:var(--t3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+th:hover{color:var(--t2)}
+th.sort-asc::after{content:' ↑';color:var(--accent)}
+th.sort-desc::after{content:' ↓';color:var(--accent)}
+th.sortable{cursor:pointer}
 th:first-child{padding-left:18px}
 th:last-child{padding-right:18px;text-align:right}
 tbody tr{border-bottom:1px solid var(--rim);cursor:pointer;transition:background .1s}
@@ -416,12 +422,25 @@ const BKTS = [
 const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9','#fbbf24'];
 
 // ── STATE ────────────────────────────────────────────────────────
-let _rows=[], _ents=[], _entMap={}, _activeType=null, _drawerRows=[], _tblData={};
+let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null, _drawerRows=[], _tblData={};
+let _sortState={}; // {tbodyId: {col, dir}}
 
 function mkB(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
-function f(){ return _activeType ? _rows.filter(r=>(r.type||'').trim()===_activeType) : _rows; }
-function lbl(){ return _activeType ? _activeType : 'ALL'; }
+function f(){
+  let rows = _activeType ? _rows.filter(r=>(r.type||'').trim()===_activeType) : _rows;
+  if (_activeBkt) {
+    const b = BKTS.find(b=>b.k===_activeBkt);
+    if (b) rows = rows.filter(r=>{ const h=r.hrsRecv; if(h==null)return false; return h>=b.min&&(b.max===9e9?true:h<b.max); });
+  }
+  return rows;
+}
+function lbl(){
+  const parts = [];
+  if (_activeType) parts.push(_activeType);
+  if (_activeBkt) { const b=BKTS.find(b=>b.k===_activeBkt); if(b) parts.push(b.l); }
+  return parts.length ? parts.join(' · ') : 'ALL';
+}
 
 // ── METRICS ──────────────────────────────────────────────────────
 function renderMetrics(rows){
@@ -453,7 +472,10 @@ function renderHours(rows){
   const mx=obj.total||1; const el=document.getElementById('hcards'); el.innerHTML='';
   BKTS.forEach(b=>{
     const n=obj[b.k]||0,p=Math.round(n/mx*100);
-    const d=document.createElement('div'); d.className='hcard';
+    const isActive = _activeBkt===b.k;
+    const d=document.createElement('div');
+    d.className='hcard'+(isActive?' active':'');
+    d.dataset.bkt=b.k;
     d.style.setProperty('--hc',b.c);
     d.innerHTML=`<div class="hcard-bg"></div>
       <div class="hcard-range">${b.l}</div>
@@ -461,9 +483,15 @@ function renderHours(rows){
       <div class="hcard-pct">${p}% of total</div>
       <div class="hcard-bar"><div class="hcard-bar-fill" style="background:${b.c}"></div></div>`;
     setTimeout(()=>d.querySelector('.hcard-bar-fill').style.width=p+'%',100);
+    d.onclick=(e)=>{
+      e.stopPropagation();
+      _activeBkt = _activeBkt===b.k ? null : b.k;
+      rerender();
+    };
     el.appendChild(d);
   });
-  document.getElementById('hr-tag').textContent=`RECEIVED AT · ${lbl()}`;
+  const bktLabel = _activeBkt ? (' · '+( BKTS.find(b=>b.k===_activeBkt)?.l||'')) : '';
+  document.getElementById('hr-tag').textContent=`RECEIVED AT${bktLabel}`;
 }
 
 // ── TYPE FILTER CARDS ─────────────────────────────────────────────
@@ -530,11 +558,49 @@ function renderCharts(rows){
   drawBars('ch-st','ch-st-sub',Object.entries(stMap).sort((a,b)=>b[1]-a[1]),`${rows.length} VINs · ${lv}`);
 }
 
-// ── BUCKET TABLE (generic) ────────────────────────────────────────
+// ── BUCKET TABLE with sort ────────────────────────────────────────
+function sortTableData(data, col, dir) {
+  return [...data].sort((a, b) => {
+    let va = col==='name' ? (a.name||'') : (a[col]||0);
+    let vb = col==='name' ? (b.name||'') : (b[col]||0);
+    if (col==='name') return dir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return dir==='asc' ? va-vb : vb-va;
+  });
+}
+
 function renderBktTbl(tbodyId, data, extraColFn=null){
   const tbody=document.getElementById(tbodyId); tbody.innerHTML='';
   if(!data.length){tbody.innerHTML=`<tr><td colspan="8" class="no-data">NO DATA</td></tr>`;return;}
-  data.forEach((row,i)=>{
+
+  // Apply sort
+  const ss = _sortState[tbodyId] || {col:'total', dir:'desc'};
+  const sorted = sortTableData(data, ss.col, ss.dir);
+
+  // Update header sort indicators
+  const thead = tbody.closest('table')?.querySelector('thead');
+  if (thead) {
+    const cols = ['name', 'extra', ...BKTS.map(b=>b.k), 'total'];
+    thead.querySelectorAll('th').forEach((th, i) => {
+      th.classList.remove('sort-asc','sort-desc');
+      const col = extraColFn ? cols[i] : [cols[0], ...cols.slice(2)][i];
+      const actualCol = extraColFn
+        ? (i===0?'name':i===1?'extra':i<=BKTS.length+1?BKTS[i-2]?.k:'total')
+        : (i===0?'name':i<=BKTS.length?BKTS[i-1]?.k:'total');
+      th.dataset.sortCol = actualCol;
+      if (actualCol && actualCol !== 'extra' && actualCol === ss.col) {
+        th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
+      }
+      if (actualCol && actualCol !== 'extra') {
+        th.onclick = ()=>{
+          const cur = _sortState[tbodyId]||{col:'total',dir:'desc'};
+          _sortState[tbodyId] = { col:actualCol, dir: cur.col===actualCol&&cur.dir==='desc'?'asc':'desc' };
+          renderBktTbl(tbodyId, data, extraColFn);
+        };
+      }
+    });
+  }
+
+  sorted.forEach((row,i)=>{
     const rnkClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const extra=extraColFn?`<td>${extraColFn(row)}</td>`:'';
     const tr=document.createElement('tr');
@@ -582,38 +648,74 @@ function openDrawer(title, rows, rowData){
       <div class="tbl-scroll" style="max-height:calc(100vh - 290px)">
         <table>
           <thead><tr>
-            <th>VIN / Thumb</th><th>Enterprise</th><th>Team</th><th>Type</th>
-            <th>Make / Model</th><th>RB</th><th>Hold</th><th>Recv Hrs</th><th>Imgs</th><th>Score</th>
+            <th onclick="sortDrawer('vin')">VIN / Thumb</th>
+            <th onclick="sortDrawer('entName')">Enterprise</th>
+            <th onclick="sortDrawer('teamName')">Team</th>
+            <th onclick="sortDrawer('type')">Type</th>
+            <th onclick="sortDrawer('make')">Make / Model</th>
+            <th onclick="sortDrawer('rb')">RB</th>
+            <th>Hold</th>
+            <th onclick="sortDrawer('hrsRecv')">Recv Hrs</th>
+            <th onclick="sortDrawer('imgCount')">Imgs</th>
+            <th onclick="sortDrawer('vinScore')">Score</th>
           </tr></thead>
-          <tbody>${rows.map(r=>{
-            const ent=_entMap[r.eid]||{};
-            const stage=ent.stage||r.entStage||'';
-            const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
-            return`<tr style="cursor:${r.vdpUrl?'pointer':'default'}" onclick="${r.vdpUrl?`window.open('${r.vdpUrl}','_blank')`:''}">
-              <td><div class="vin-cell">
-                ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
-                <span style="font-family:JetBrains Mono,monospace;font-size:9px">${r.vin||'—'}</span>
-              </div></td>
-              <td style="font-size:11px">${r.entName||r.eid||'—'} ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}</td>
-              <td style="font-size:10px">${r.teamName||'—'}</td>
-              <td>${r.type||'—'}</td>
-              <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
-              <td style="font-size:10px">${r.rb||'—'}</td>
-              <td style="font-size:9px;color:var(--amber)">${r.holdReason||'—'}</td>
-              <td style="font-family:JetBrains Mono,monospace">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
-              <td style="font-family:JetBrains Mono,monospace">${r.imgCount||0}</td>
-              <td style="font-family:JetBrains Mono,monospace">${r.vinScore||r.overallScore||'—'}</td>
-            </tr>`;
-          }).join('')}</tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>`;
+  // Render sorted rows
+  setTimeout(()=>renderDrawerRows(), 0);
   document.getElementById('drw').classList.add('open');
   document.getElementById('ov').style.display='block';
 }
 function closeDrawer(){
   document.getElementById('drw').classList.remove('open');
   document.getElementById('ov').style.display='none';
+}
+
+let _drawerSortCol='hrsRecv', _drawerSortDir='desc';
+function sortDrawer(col){
+  if(_drawerSortCol===col) _drawerSortDir=_drawerSortDir==='asc'?'desc':'asc';
+  else { _drawerSortCol=col; _drawerSortDir='desc'; }
+  renderDrawerRows();
+}
+
+function renderDrawerRows(){
+  const rows=[..._drawerRows].sort((a,b)=>{
+    let va=a[_drawerSortCol], vb=b[_drawerSortCol];
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==='string') return _drawerSortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return _drawerSortDir==='asc'?va-vb:vb-va;
+  });
+  // Update sort indicators on drawer thead
+  document.querySelectorAll('.drw-tbl-wrap thead th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    const col=th.getAttribute('onclick')?.match(/sortDrawer\('(.+)'\)/)?.[1];
+    if(col===_drawerSortCol) th.classList.add(_drawerSortDir==='asc'?'sort-asc':'sort-desc');
+  });
+  const tbody=document.querySelector('.drw-tbl-wrap tbody');
+  if(!tbody)return;
+  const _entMapLocal=_entMap;
+  tbody.innerHTML=rows.map(r=>{
+    const ent=_entMapLocal[r.eid]||{};
+    const stage=ent.stage||r.entStage||'';
+    const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
+    return`<tr style="cursor:${r.vdpUrl?'pointer':'default'}" onclick="${r.vdpUrl?`window.open('${r.vdpUrl}','_blank')`:''}">
+      <td><div class="vin-cell">
+        ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
+        <span style="font-family:JetBrains Mono,monospace;font-size:9px">${r.vin||'—'}</span>
+      </div></td>
+      <td style="font-size:11px">${r.entName||r.eid||'—'} ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}</td>
+      <td style="font-size:10px">${r.teamName||'—'}</td>
+      <td>${r.type||'—'}</td>
+      <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
+      <td style="font-size:10px">${r.rb||'—'}</td>
+      <td style="font-size:9px;color:var(--amber)">${r.holdReason||'—'}</td>
+      <td style="font-family:JetBrains Mono,monospace">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
+      <td style="font-family:JetBrains Mono,monospace">${r.imgCount||0}</td>
+      <td style="font-family:JetBrains Mono,monospace">${r.vinScore||r.overallScore||'—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── DOWNLOAD ─────────────────────────────────────────────────────
@@ -652,9 +754,9 @@ function rerender(){
   rows.forEach(r=>{const e=r.entName||r.eid||'Unknown';
     if(!eMap[e]) eMap[e]={name:e,eid:r.eid,...mkB(),_rows:[]};
     addB(eMap[e],r.hrsRecv); eMap[e]._rows.push(r);});
-  const eData=Object.values(eMap).sort((a,b)=>b.total-a.total).slice(0,15);
+  const eData=Object.values(eMap).sort((a,b)=>b.total-a.total);
   _tblData['dl-ent']=eData; mkDl('dl-ent',`enterprises-${l.toLowerCase()}`);
-  document.getElementById('ent-tag').textContent=`TOP 15 · ${rows.length} VINs`;
+  document.getElementById('ent-tag').textContent=`${eData.length} ENTERPRISES · ${rows.length} VINs`;
   renderBktTbl('ent-tbody',eData,(row)=>{
     const ent=_entMap[row.eid]||{};
     const stage=ent.stage||row._rows[0]?.entStage||'';
