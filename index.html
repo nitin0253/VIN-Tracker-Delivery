@@ -561,9 +561,12 @@ function renderCharts(rows){
 // ── BUCKET TABLE with sort ────────────────────────────────────────
 function sortTableData(data, col, dir) {
   return [...data].sort((a, b) => {
-    let va = col==='name' ? (a.name||'') : (a[col]||0);
-    let vb = col==='name' ? (b.name||'') : (b[col]||0);
-    if (col==='name') return dir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    let va = a[col] ?? (col==='name'?'':0);
+    let vb = b[col] ?? (col==='name'?'':0);
+    if (typeof va === 'string' || col==='name') {
+      va = String(va); vb = String(vb);
+      return dir==='asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    }
     return dir==='asc' ? va-vb : vb-va;
   });
 }
@@ -579,24 +582,25 @@ function renderBktTbl(tbodyId, data, extraColFn=null){
   // Update header sort indicators
   const thead = tbody.closest('table')?.querySelector('thead');
   if (thead) {
-    const cols = ['name', 'extra', ...BKTS.map(b=>b.k), 'total'];
+    // Build column key list: name, [extra if present], bkt0..bkt4, total
+    const colKeys = extraColFn
+      ? ['name', '_extra', ...BKTS.map(b=>b.k), 'total']
+      : ['name',             ...BKTS.map(b=>b.k), 'total'];
+
     thead.querySelectorAll('th').forEach((th, i) => {
       th.classList.remove('sort-asc','sort-desc');
-      const col = extraColFn ? cols[i] : [cols[0], ...cols.slice(2)][i];
-      const actualCol = extraColFn
-        ? (i===0?'name':i===1?'extra':i<=BKTS.length+1?BKTS[i-2]?.k:'total')
-        : (i===0?'name':i<=BKTS.length?BKTS[i-1]?.k:'total');
-      th.dataset.sortCol = actualCol;
-      if (actualCol && actualCol !== 'extra' && actualCol === ss.col) {
-        th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
-      }
-      if (actualCol && actualCol !== 'extra') {
-        th.onclick = ()=>{
-          const cur = _sortState[tbodyId]||{col:'total',dir:'desc'};
-          _sortState[tbodyId] = { col:actualCol, dir: cur.col===actualCol&&cur.dir==='desc'?'asc':'desc' };
-          renderBktTbl(tbodyId, data, extraColFn);
-        };
-      }
+      const colKey = colKeys[i];
+      if (!colKey || colKey === '_extra') return; // extra col (Stage/Type) not sortable
+
+      // Show indicator if this is the active sort col
+      if (colKey === ss.col) th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
+
+      th.style.cursor = 'pointer';
+      th.onclick = ()=>{
+        const cur = _sortState[tbodyId]||{col:'total',dir:'desc'};
+        _sortState[tbodyId] = { col:colKey, dir: cur.col===colKey&&cur.dir==='desc'?'asc':'desc' };
+        renderBktTbl(tbodyId, data, extraColFn);
+      };
     });
   }
 
