@@ -160,13 +160,13 @@ a{color:inherit;text-decoration:none}
 .chart-panel{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 22px;box-shadow:var(--sh)}
 .chart-panel-title{font-size:14px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px}
 .chart-panel-sub{font-size:11px;font-family:var(--f-mono);color:var(--t2);margin-bottom:16px;letter-spacing:.3px}
-.bar-list{display:flex;flex-direction:column;gap:9px}
-.bar-item{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:10px;padding:3px 6px;border-radius:6px;transition:background .15s;user-select:none}
+.bar-list{display:flex;flex-direction:column;gap:12px}
+.bar-item{display:grid;grid-template-columns:minmax(120px,30%) 1fr 56px;align-items:center;gap:10px;padding:3px 6px;border-radius:6px;transition:background .15s;user-select:none}
 .bar-item:hover{background:var(--card2)}
 .bar-item-active{background:var(--ag2) !important;outline:1px solid var(--accent)}
 .bar-item-active .bar-name{color:var(--accent)}
-.bar-name{font-size:12px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar-track{height:5px;background:var(--rim);border-radius:3px;overflow:hidden}
+.bar-name{font-size:12px;color:var(--t2);white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+.bar-track{height:6px;background:var(--rim);border-radius:3px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.34,1.56,.64,1)}
 .bar-count{font-size:12px;font-family:var(--f-mono);color:var(--t2);text-align:right}
 
@@ -334,16 +334,20 @@ td:last-child{padding-right:18px;text-align:right}
     <div class="sec-hd">
       <div class="sec-label">
         <span class="sec-title">Overview</span>
-        <span class="tag tag-blue" id="ov-tag-pending" style="cursor:pointer" onclick="setStatusFilter('QC Pending')" title="Filter: QC Pending only">QC PENDING</span>
-        <span class="tag" id="ov-tag-hold" style="cursor:pointer;background:rgba(240,81,110,.12);border:1px solid rgba(240,81,110,.3);color:var(--red)" onclick="setStatusFilter('QC Hold')" title="Filter: QC Hold only">QC HOLD</span>
-        <span class="tag" id="ov-tag-all" style="cursor:pointer;background:var(--ag2);border:1px solid rgba(92,124,250,.2);color:var(--t3)" onclick="setStatusFilter(null)" title="Show all">ALL</span>
+        <span class="tag tag-blue">QC PENDING</span>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button id="reset-btn" onclick="resetAllFilters()" style="display:none;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--rim2);background:var(--card2);color:var(--t2);font-size:11px;font-family:var(--f-mono);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--rim2)';this.style.color='var(--t2)'">✕ Reset Filters</button>
       </div>
     </div>
-    <div class="metric-strip" id="metrics"></div>
-    <div class="metric-strip" id="metrics-hold" style="margin-top:10px;display:none"></div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+      <div class="metric-strip" id="metrics"></div>
+      <div id="hold-card" onclick="toggleHoldFilter()" title="Click to filter by QC Hold" style="cursor:pointer;background:var(--card);border:1px solid rgba(240,81,110,.3);border-radius:16px;padding:18px 24px;min-width:160px;transition:all .2s;flex-shrink:0;box-shadow:var(--sh)">
+        <div style="font-size:10px;font-family:var(--f-mono);color:var(--red);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:600">QC HOLD</div>
+        <div id="hold-card-val" style="font-size:36px;font-weight:800;letter-spacing:-1.5px;color:var(--red);font-variant-numeric:tabular-nums">0</div>
+        <div style="font-size:11px;font-family:var(--f-mono);color:var(--t2);margin-top:6px" id="hold-card-sub">Total VINs on Hold</div>
+      </div>
+    </div>
   </div>
 
   <!-- HOURLY BREAKDOWN -->
@@ -445,7 +449,9 @@ let _sortState={}; // {tbodyId: {col, dir}}
 function mkB(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
 function f(){
-  let rows = _activeStatus ? _rows.filter(r=>(r.rb||'').trim()===_activeStatus) : _rows;
+  // Default: show QC Pending. QC Hold card click switches to QC Hold.
+  const statusFilter = _activeStatus || 'QC Pending';
+  let rows = _rows.filter(r=>(r.rb||'').trim()===statusFilter);
   if (_activeType) rows = rows.filter(r=>(r.type||'').trim()===_activeType);
   if (_activeBkt) {
     const b = BKTS.find(b=>b.k===_activeBkt);
@@ -484,8 +490,8 @@ function buildMetricItems(rows, statusLabel){
 }
 
 function renderMetrics(rows){
-  // Main strip — filtered view
-  const items = buildMetricItems(rows, lbl()||'All');
+  // Main metrics strip — always shows filtered view (QC Pending by default)
+  const items = buildMetricItems(rows, lbl()||'QC Pending');
   document.getElementById('metrics').innerHTML = items.map(i=>`
     <div class="metric" style="--mc:${i.c}">
       <div class="metric-accent"></div>
@@ -495,31 +501,20 @@ function renderMetrics(rows){
       <div class="metric-sub">${i.sub}</div>
     </div>`).join('');
 
-  // QC Hold strip — always show unless already filtered to Hold
-  const holdEl = document.getElementById('metrics-hold');
-  if (!holdEl) return;
-  if (_activeStatus === 'QC Hold') {
-    holdEl.style.display='none';
-  } else {
-    const holdRows = _rows.filter(r=>(r.rb||'').trim()==='QC Hold');
-    if (holdRows.length) {
-      const holdItems = buildMetricItems(holdRows, 'QC Hold');
-      holdEl.style.display='grid';
-      holdEl.innerHTML = holdItems.map(i=>`
-        <div class="metric" style="--mc:${i.c};border-color:rgba(240,81,110,.25)">
-          <div class="metric-accent"></div>
-          <div class="metric-icon">${i.icon}</div>
-          <div class="metric-val">${i.val.toLocaleString()}</div>
-          <div class="metric-label">${i.label}</div>
-          <div class="metric-sub" style="color:var(--red)">${i.sub}</div>
-        </div>`).join('');
-    } else {
-      holdEl.style.display='none';
-    }
+  // QC Hold card — always count from full _rows (unfiltered)
+  const holdCount = _rows.filter(r=>(r.rb||'').trim()==='QC Hold').length;
+  const holdCardVal = document.getElementById('hold-card-val');
+  const holdCardSub = document.getElementById('hold-card-sub');
+  const holdCard    = document.getElementById('hold-card');
+  if (holdCardVal) holdCardVal.textContent = holdCount.toLocaleString();
+  if (holdCardSub) holdCardSub.textContent = 'Total VINs on Hold';
+  if (holdCard) {
+    const isActive = _activeStatus === 'QC Hold';
+    holdCard.style.borderColor = isActive ? 'var(--red)' : 'rgba(240,81,110,.3)';
+    holdCard.style.background  = isActive ? 'rgba(240,81,110,.1)' : 'var(--card)';
+    holdCard.style.boxShadow   = isActive ? '0 0 0 2px var(--red),0 4px 16px rgba(240,81,110,.2)' : 'var(--sh)';
   }
 
-  // Update UI helpers
-  updateStatusTags();
   updateResetBtn();
 }
 
@@ -619,7 +614,8 @@ function renderCharts(rows){
   const lv=lbl();
   document.getElementById('dist-tag').textContent=lv||'ALL';
   const baseRows = (() => {
-    let r = _activeStatus ? _rows.filter(x=>(x.rb||'').trim()===_activeStatus) : _rows;
+    const statusFilter = _activeStatus || 'QC Pending';
+    let r = _rows.filter(x=>(x.rb||'').trim()===statusFilter);
     if (_activeType) r = r.filter(x=>(x.type||'').trim()===_activeType);
     if (_activeBkt) { const b=BKTS.find(b=>b.k===_activeBkt); if(b) r=r.filter(x=>{const h=x.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);}); }
     return r;
@@ -785,7 +781,21 @@ function setStatusFilter(status) {
   rerender();
 }
 
+function toggleHoldFilter() {
+  // Toggle: if already on QC Hold, reset to default (QC Pending)
+  if (_activeStatus === 'QC Hold') {
+    _activeStatus = null;
+  } else {
+    _activeStatus = 'QC Hold';
+  }
+  _activeType=null; _activeBkt=null; _activeTeamType=null;
+  _activeStage=null; _activeHoldReason=null;
+  syncTypeActive();
+  rerender();
+}
+
 function resetAllFilters() {
+  // Reset all sub-filters; QC Pending is the default view
   _activeStatus=null; _activeType=null; _activeBkt=null;
   _activeTeamType=null; _activeStage=null; _activeHoldReason=null;
   syncTypeActive();
@@ -793,6 +803,7 @@ function resetAllFilters() {
 }
 
 function anyFilterActive() {
+  // Status=QC Hold is a user action so show reset; status=null (QC Pending default) is normal
   return !!(  _activeStatus||_activeType||_activeBkt||
               _activeTeamType||_activeStage||_activeHoldReason);
 }
@@ -957,7 +968,7 @@ function rerender(){
 
 
 
-  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${_activeStatus||'All'} · ${l}`;
+  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${_activeStatus||'QC Pending'} · ${l||'ALL'}`;
   updateResetBtn();
 }
 
