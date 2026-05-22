@@ -332,9 +332,18 @@ td:last-child{padding-right:18px;text-align:right}
   <!-- METRICS -->
   <div class="sec">
     <div class="sec-hd">
-      <div class="sec-label"><span class="sec-title">Overview</span><span class="tag tag-blue">QC PENDING</span></div>
+      <div class="sec-label">
+        <span class="sec-title">Overview</span>
+        <span class="tag tag-blue" id="ov-tag-pending" style="cursor:pointer" onclick="setStatusFilter('QC Pending')" title="Filter: QC Pending only">QC PENDING</span>
+        <span class="tag" id="ov-tag-hold" style="cursor:pointer;background:rgba(240,81,110,.12);border:1px solid rgba(240,81,110,.3);color:var(--red)" onclick="setStatusFilter('QC Hold')" title="Filter: QC Hold only">QC HOLD</span>
+        <span class="tag" id="ov-tag-all" style="cursor:pointer;background:var(--ag2);border:1px solid rgba(92,124,250,.2);color:var(--t3)" onclick="setStatusFilter(null)" title="Show all">ALL</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="reset-btn" onclick="resetAllFilters()" style="display:none;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--rim2);background:var(--card2);color:var(--t2);font-size:11px;font-family:var(--f-mono);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--rim2)';this.style.color='var(--t2)'">✕ Reset Filters</button>
+      </div>
     </div>
     <div class="metric-strip" id="metrics"></div>
+    <div class="metric-strip" id="metrics-hold" style="margin-top:10px;display:none"></div>
   </div>
 
   <!-- HOURLY BREAKDOWN -->
@@ -365,9 +374,9 @@ td:last-child{padding-right:18px;text-align:right}
         <div class="bar-list" id="ch-tt"></div>
       </div>
       <div class="chart-panel">
-        <div class="chart-panel-title">By Enterprise Stage <span id="ch-st-clear" onclick="_activeStage=null;rerender()" style="display:none;font-size:9px;font-family:var(--f-mono);color:var(--accent);cursor:pointer;margin-left:8px">✕ clear</span></div>
-        <div class="chart-panel-sub" id="ch-st-sub"></div>
-        <div class="bar-list" id="ch-st"></div>
+        <div class="chart-panel-title">By Hold Reason <span id="ch-hr-clear" onclick="_activeHoldReason=null;rerender()" style="display:none;font-size:9px;font-family:var(--f-mono);color:var(--accent);cursor:pointer;margin-left:8px">✕ clear</span></div>
+        <div class="chart-panel-sub" id="ch-hr-sub"></div>
+        <div class="bar-list" id="ch-hr"></div>
       </div>
     </div>
   </div>
@@ -430,45 +439,54 @@ const BKTS = [
 const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9','#fbbf24'];
 
 // ── STATE ────────────────────────────────────────────────────────
-let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null, _activeTeamType=null, _activeStage=null, _drawerRows=[], _tblData={};
+let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null, _activeTeamType=null, _activeStage=null, _activeHoldReason=null, _activeStatus=null, _drawerRows=[], _tblData={};
 let _sortState={}; // {tbodyId: {col, dir}}
 
 function mkB(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
 function f(){
-  let rows = _activeType ? _rows.filter(r=>(r.type||'').trim()===_activeType) : _rows;
+  let rows = _activeStatus ? _rows.filter(r=>(r.rb||'').trim()===_activeStatus) : _rows;
+  if (_activeType) rows = rows.filter(r=>(r.type||'').trim()===_activeType);
   if (_activeBkt) {
     const b = BKTS.find(b=>b.k===_activeBkt);
     if (b) rows = rows.filter(r=>{ const h=r.hrsRecv; if(h==null)return false; return h>=b.min&&(b.max===9e9?true:h<b.max); });
   }
   if (_activeTeamType) rows = rows.filter(r=>(r.teamType||'').trim()===_activeTeamType);
   if (_activeStage)    rows = rows.filter(r=>{ const ent=_entMap[r.eid]||{}; return (ent.stage||'').trim()===_activeStage; });
+  if (_activeHoldReason) rows = rows.filter(r=>(r.holdReason||'').trim()===_activeHoldReason);
   return rows;
 }
 function lbl(){
   const parts = [];
+  if (_activeStatus) parts.push(_activeStatus);
   if (_activeType) parts.push(_activeType);
   if (_activeBkt) { const b=BKTS.find(b=>b.k===_activeBkt); if(b) parts.push(b.l); }
   if (_activeTeamType) parts.push(_activeTeamType);
   if (_activeStage) parts.push(_activeStage);
+  if (_activeHoldReason) parts.push(_activeHoldReason.length>30?_activeHoldReason.slice(0,28)+'…':_activeHoldReason);
   return parts.length ? parts.join(' · ') : 'ALL';
 }
 
 // ── METRICS ──────────────────────────────────────────────────────
-function renderMetrics(rows){
+function buildMetricItems(rows, statusLabel){
   const total=rows.length;
   const ents=[...new Set(rows.map(r=>r.eid).filter(Boolean))].length;
-  const teams=[...new Set(rows.map(r=>r.teamId).filter(Boolean))].length; // Note: using poc field
+  const teams=[...new Set(rows.map(r=>r.teamId).filter(Boolean))].length;
   const withImg=rows.filter(r=>r.imgCount>0).length;
   const avg24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
-  const items=[
-    {icon:'🔢',val:total,label:'Total VINs',sub:'QC Pending',c:'var(--accent)'},
+  return [
+    {icon:'🔢',val:total,label:'Total VINs',sub:statusLabel,c:'var(--accent)'},
     {icon:'🏢',val:ents,label:'Enterprises',sub:'Unique',c:'var(--purple)'},
     {icon:'👥',val:teams,label:'Teams',sub:'Assigned',c:'var(--teal)'},
     {icon:'📸',val:withImg,label:'Has Images',sub:`${total?Math.round(withImg/total*100):0}%`,c:'var(--green)'},
     {icon:'⏰',val:avg24,label:'Over 24h',sub:'Waiting',c:'var(--red)'},
   ];
-  document.getElementById('metrics').innerHTML=items.map(i=>`
+}
+
+function renderMetrics(rows){
+  // Main strip — filtered view
+  const items = buildMetricItems(rows, lbl()||'All');
+  document.getElementById('metrics').innerHTML = items.map(i=>`
     <div class="metric" style="--mc:${i.c}">
       <div class="metric-accent"></div>
       <div class="metric-icon">${i.icon}</div>
@@ -476,6 +494,33 @@ function renderMetrics(rows){
       <div class="metric-label">${i.label}</div>
       <div class="metric-sub">${i.sub}</div>
     </div>`).join('');
+
+  // QC Hold strip — always show unless already filtered to Hold
+  const holdEl = document.getElementById('metrics-hold');
+  if (!holdEl) return;
+  if (_activeStatus === 'QC Hold') {
+    holdEl.style.display='none';
+  } else {
+    const holdRows = _rows.filter(r=>(r.rb||'').trim()==='QC Hold');
+    if (holdRows.length) {
+      const holdItems = buildMetricItems(holdRows, 'QC Hold');
+      holdEl.style.display='grid';
+      holdEl.innerHTML = holdItems.map(i=>`
+        <div class="metric" style="--mc:${i.c};border-color:rgba(240,81,110,.25)">
+          <div class="metric-accent"></div>
+          <div class="metric-icon">${i.icon}</div>
+          <div class="metric-val">${i.val.toLocaleString()}</div>
+          <div class="metric-label">${i.label}</div>
+          <div class="metric-sub" style="color:var(--red)">${i.sub}</div>
+        </div>`).join('');
+    } else {
+      holdEl.style.display='none';
+    }
+  }
+
+  // Update UI helpers
+  updateStatusTags();
+  updateResetBtn();
 }
 
 // ── HOURLY CARDS ─────────────────────────────────────────────────
@@ -573,35 +618,34 @@ function drawBars(id,subId,entries,sub,onClickFn){
 function renderCharts(rows){
   const lv=lbl();
   document.getElementById('dist-tag').textContent=lv||'ALL';
-  // Use _rows (unfiltered by teamType/stage) for chart counts, but filtered by type+bkt
   const baseRows = (() => {
-    let r = _activeType ? _rows.filter(x=>(x.type||'').trim()===_activeType) : _rows;
+    let r = _activeStatus ? _rows.filter(x=>(x.rb||'').trim()===_activeStatus) : _rows;
+    if (_activeType) r = r.filter(x=>(x.type||'').trim()===_activeType);
     if (_activeBkt) { const b=BKTS.find(b=>b.k===_activeBkt); if(b) r=r.filter(x=>{const h=x.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);}); }
     return r;
   })();
-  const ttMap={},stMap={};
-  baseRows.forEach(r=>{
-    const tt=(r.teamType||'Unknown').trim(); ttMap[tt]=(ttMap[tt]||0)+1;
-    const eid=r.eid; const ent=_entMap[eid]||{};
-    const st=(ent.stage||'Unknown').trim(); stMap[st]=(stMap[st]||0)+1;
-  });
 
-  const ttClick = Object.assign((name)=>{
-    _activeTeamType = _activeTeamType===name ? null : name;
-    rerender();
-  }, {active: _activeTeamType});
-
-  const stClick = Object.assign((name)=>{
-    _activeStage = _activeStage===name ? null : name;
-    rerender();
-  }, {active: _activeStage});
-
+  // By Team Type
+  const ttMap={};
+  baseRows.forEach(r=>{ const tt=(r.teamType||'Unknown').trim(); ttMap[tt]=(ttMap[tt]||0)+1; });
+  const ttClick=Object.assign((name)=>{ _activeTeamType=_activeTeamType===name?null:name; rerender(); },{active:_activeTeamType});
   drawBars('ch-tt','ch-tt-sub',Object.entries(ttMap).sort((a,b)=>b[1]-a[1]),`${baseRows.length} VINs · click to filter`,ttClick);
-  drawBars('ch-st','ch-st-sub',Object.entries(stMap).sort((a,b)=>b[1]-a[1]),`${baseRows.length} VINs · click to filter`,stClick);
   const ttClear=document.getElementById('ch-tt-clear');
-  const stClear=document.getElementById('ch-st-clear');
   if(ttClear) ttClear.style.display=_activeTeamType?'inline':'none';
-  if(stClear) stClear.style.display=_activeStage?'inline':'none';
+
+  // By Hold Reason
+  const hrMap={};
+  baseRows.forEach(r=>{ const hr=(r.holdReason||'').trim(); if(hr) hrMap[hr]=(hrMap[hr]||0)+1; });
+  const hrEntries=Object.entries(hrMap).sort((a,b)=>b[1]-a[1]);
+  const hrClick=Object.assign((name)=>{ _activeHoldReason=_activeHoldReason===name?null:name; rerender(); },{active:_activeHoldReason});
+  const holdCount=baseRows.filter(r=>(r.holdReason||'').trim()).length;
+  drawBars('ch-hr','ch-hr-sub',hrEntries,
+    hrEntries.length?`${holdCount} on hold · click to filter`:'No hold reasons in view',
+    hrEntries.length?hrClick:null);
+  const hrClear=document.getElementById('ch-hr-clear');
+  if(hrClear) hrClear.style.display=_activeHoldReason?'inline':'none';
+
+  updateResetBtn();
 }
 
 // ── BUCKET TABLE with sort ────────────────────────────────────────
@@ -729,6 +773,48 @@ function openDrawer(title, rows, rowData){
 function closeDrawer(){
   document.getElementById('drw').classList.remove('open');
   document.getElementById('ov').style.display='none';
+}
+
+// ── Filter helpers ───────────────────────────────────────────────
+function setStatusFilter(status) {
+  _activeStatus = status;
+  // Reset sub-filters when switching top-level status
+  _activeType=null; _activeBkt=null; _activeTeamType=null;
+  _activeStage=null; _activeHoldReason=null;
+  syncTypeActive();
+  rerender();
+}
+
+function resetAllFilters() {
+  _activeStatus=null; _activeType=null; _activeBkt=null;
+  _activeTeamType=null; _activeStage=null; _activeHoldReason=null;
+  syncTypeActive();
+  rerender();
+}
+
+function anyFilterActive() {
+  return !!(  _activeStatus||_activeType||_activeBkt||
+              _activeTeamType||_activeStage||_activeHoldReason);
+}
+
+function updateResetBtn() {
+  const btn = document.getElementById('reset-btn');
+  if (!btn) return;
+  btn.style.display = anyFilterActive() ? 'inline-flex' : 'none';
+}
+
+function updateStatusTags() {
+  const p = document.getElementById('ov-tag-pending');
+  const hd = document.getElementById('ov-tag-hold');
+  const al = document.getElementById('ov-tag-all');
+  if (!p) return;
+  const active = _activeStatus;
+  p.style.opacity  = (!active||active==='QC Pending') ? '1' : '0.4';
+  hd.style.opacity = (!active||active==='QC Hold')    ? '1' : '0.4';
+  al.style.opacity = !active ? '1' : '0.4';
+  p.style.fontWeight  = active==='QC Pending' ? '700':'400';
+  hd.style.fontWeight = active==='QC Hold'    ? '700':'400';
+  al.style.fontWeight = !active               ? '700':'400';
 }
 
 // ── Copy to clipboard helper ──────────────────────────────────────
@@ -871,7 +957,8 @@ function rerender(){
 
 
 
-  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} QC Pending · ${l}`;
+  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${_activeStatus||'All'} · ${l}`;
+  updateResetBtn();
 }
 
 // ── PROCESS ──────────────────────────────────────────────────────
