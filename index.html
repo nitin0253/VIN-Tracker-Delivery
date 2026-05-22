@@ -237,6 +237,9 @@ td:last-child{padding-right:18px;text-align:right}
 .thumb-img{width:52px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--rim);flex-shrink:0}
 .vin-cell{display:flex;align-items:center;gap:8px}
 .no-data{text-align:center;padding:40px;font-family:var(--f-mono);font-size:10px;color:var(--t3);letter-spacing:.5px}
+.copy-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--card2);border:1px solid var(--rim);color:var(--t3);font-size:9px;cursor:pointer;flex-shrink:0;transition:all .15s;vertical-align:middle;margin-left:4px;line-height:1}
+.copy-btn:hover{background:var(--ag);border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{background:rgba(0,200,150,.15);border-color:var(--green);color:var(--green)}
 
 /* External link icon */
 .ext-link{color:var(--accent);font-size:10px;opacity:.7;margin-left:4px}
@@ -728,6 +731,24 @@ function closeDrawer(){
   document.getElementById('ov').style.display='none';
 }
 
+// ── Copy to clipboard helper ──────────────────────────────────────
+function copyVal(text, btn) {
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.classList.add('copied');
+    btn.textContent='✓';
+    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='⎘'; }, 1500);
+  }).catch(()=>{
+    // fallback for non-https
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.classList.add('copied'); btn.textContent='✓';
+    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='⎘'; }, 1500);
+  });
+}
+
 let _drawerSortCol='hrsRecv', _drawerSortDir='desc';
 function sortDrawer(col){
   if(_drawerSortCol===col) _drawerSortDir=_drawerSortDir==='asc'?'desc':'asc';
@@ -755,13 +776,28 @@ function renderDrawerRows(){
     const ent=_entMapLocal[r.eid]||{};
     const stage=ent.stage||r.entStage||'';
     const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
+    const vinVal=r.vin||'';
+    const entVal=r.entName||r.eid||'';
+    const teamVal=r.teamName||'';
     return`<tr style="cursor:${r.vdpUrl?'pointer':'default'}" onclick="${r.vdpUrl?`window.open('${r.vdpUrl}','_blank')`:''}">
       <td><div class="vin-cell">
         ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
-        <span style="font-family:JetBrains Mono,monospace;font-size:9px">${r.vin||'—'}</span>
+        <span style="font-family:JetBrains Mono,monospace;font-size:9px">${vinVal||'—'}</span>
+        ${vinVal?`<button class="copy-btn" title="Copy VIN" onclick="event.stopPropagation();copyVal('${vinVal.replace(/'/g,"\'")}',this)">⎘</button>`:''}
       </div></td>
-      <td style="font-size:11px">${r.entName||r.eid||'—'} ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}</td>
-      <td style="font-size:10px">${r.teamName||'—'}</td>
+      <td style="font-size:11px">
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          <span>${entVal||'—'}</span>
+          ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}
+          ${entVal?`<button class="copy-btn" title="Copy Enterprise Name" onclick="event.stopPropagation();copyVal('${entVal.replace(/'/g,"\'")}',this)">⎘</button>`:''}
+        </div>
+      </td>
+      <td style="font-size:10px">
+        <div style="display:flex;align-items:center;gap:4px">
+          <span>${teamVal||'—'}</span>
+          ${teamVal?`<button class="copy-btn" title="Copy Team Name" onclick="event.stopPropagation();copyVal('${teamVal.replace(/'/g,"\'")}',this)">⎘</button>`:''}
+        </div>
+      </td>
       <td>${r.type||'—'}</td>
       <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
       <td style="font-size:10px">${r.rb||'—'}</td>
