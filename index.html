@@ -464,13 +464,14 @@ function f(){
 }
 function lbl(){
   const parts = [];
-  if (_activeStatus) parts.push(_activeStatus);
+  // Always show current status context
+  parts.push(_activeStatus || 'QC Pending');
   if (_activeType) parts.push(_activeType);
   if (_activeBkt) { const b=BKTS.find(b=>b.k===_activeBkt); if(b) parts.push(b.l); }
   if (_activeTeamType) parts.push(_activeTeamType);
   if (_activeStage) parts.push(_activeStage);
   if (_activeHoldReason) parts.push(_activeHoldReason.length>30?_activeHoldReason.slice(0,28)+'…':_activeHoldReason);
-  return parts.length ? parts.join(' · ') : 'ALL';
+  return parts.join(' · ');
 }
 
 // ── METRICS ──────────────────────────────────────────────────────
@@ -548,8 +549,13 @@ function renderHours(rows){
 
 // ── TYPE FILTER CARDS ─────────────────────────────────────────────
 function renderTypeCards(){
+  // Use same status-filtered base as f()
+  const baseRows = (() => {
+    const sf = _activeStatus || 'QC Pending';
+    return _rows.filter(r=>(r.rb||'').trim()===sf);
+  })();
   const map={};
-  _rows.forEach(r=>{const t=(r.type||'').trim();if(t)map[t]=(map[t]||0)+1;});
+  baseRows.forEach(r=>{const t=(r.type||'').trim();if(t)map[t]=(map[t]||0)+1;});
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
   document.getElementById('type-tag').textContent=`${entries.length} TYPES`;
   const el=document.getElementById('type-fcards'); el.innerHTML='';
@@ -558,7 +564,7 @@ function renderTypeCards(){
   const ac=document.createElement('div');
   ac.className='fcard'+(_activeType===null?' active':'');
   ac.style.setProperty('--fc','var(--accent)');
-  ac.innerHTML=`<div class="fc-name">All Types</div><div class="fc-val">${_rows.length.toLocaleString()}</div><div class="fc-sub">100%</div>`;
+  ac.innerHTML=`<div class="fc-name">All Types</div><div class="fc-val">${baseRows.length.toLocaleString()}</div><div class="fc-sub">100%</div>`;
   ac.onclick=(e)=>{e.stopPropagation();_activeType=null;syncTypeActive();rerender();};
   el.appendChild(ac);
 
@@ -569,7 +575,7 @@ function renderTypeCards(){
     d.dataset.t=name; d.style.setProperty('--fc',col);
     d.innerHTML=`<div class="fc-name" title="${name}">${name}</div>
       <div class="fc-val">${count.toLocaleString()}</div>
-      <div class="fc-sub">${Math.round(count/_rows.length*100)}%</div>`;
+      <div class="fc-sub">${Math.round(count/baseRows.length*100)}%</div>`;
     d.onclick=(e)=>{e.stopPropagation();_activeType=name;syncTypeActive();rerender();};
     el.appendChild(d);
   });
@@ -629,14 +635,24 @@ function renderCharts(rows){
   const ttClear=document.getElementById('ch-tt-clear');
   if(ttClear) ttClear.style.display=_activeTeamType?'inline':'none';
 
-  // By Hold Reason
+  // By Hold Reason — always counts from QC Hold rows (independent of current status filter)
+  const holdBaseRows = _rows.filter(r=>(r.rb||'').trim()==='QC Hold');
   const hrMap={};
-  baseRows.forEach(r=>{ const hr=(r.holdReason||'').trim(); if(hr) hrMap[hr]=(hrMap[hr]||0)+1; });
+  holdBaseRows.forEach(r=>{ const hr=(r.holdReason||'').trim(); if(hr) hrMap[hr]=(hrMap[hr]||0)+1; });
   const hrEntries=Object.entries(hrMap).sort((a,b)=>b[1]-a[1]);
-  const hrClick=Object.assign((name)=>{ _activeHoldReason=_activeHoldReason===name?null:name; rerender(); },{active:_activeHoldReason});
-  const holdCount=baseRows.filter(r=>(r.holdReason||'').trim()).length;
+  const hrClick=Object.assign((name)=>{
+    _activeHoldReason=_activeHoldReason===name?null:name;
+    // Switching to hold reason filter should also switch status to QC Hold
+    if(_activeHoldReason && _activeStatus!=='QC Hold') {
+      _activeStatus='QC Hold';
+      _activeType=null; _activeBkt=null; _activeTeamType=null; _activeStage=null;
+      syncTypeActive();
+    }
+    rerender();
+  },{active:_activeHoldReason});
+  const holdCount=holdBaseRows.filter(r=>(r.holdReason||'').trim()).length;
   drawBars('ch-hr','ch-hr-sub',hrEntries,
-    hrEntries.length?`${holdCount} on hold · click to filter`:'No hold reasons in view',
+    hrEntries.length?`${holdCount} QC Hold VINs · click to filter`:'No QC Hold VINs',
     hrEntries.length?hrClick:null);
   const hrClear=document.getElementById('ch-hr-clear');
   if(hrClear) hrClear.style.display=_activeHoldReason?'inline':'none';
@@ -934,8 +950,10 @@ function dlTbl(id,fmt,pre){
 // ── RERENDER ─────────────────────────────────────────────────────
 function rerender(){
   const rows=f(), l=lbl();
+  renderMetrics(rows);  // always re-render metrics with filtered rows
   renderHours(rows);
   renderCharts(rows);
+  renderTypeCards();    // re-render type cards with current status filter
 
   // Enterprise
   const eMap={};
@@ -968,7 +986,7 @@ function rerender(){
 
 
 
-  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${_activeStatus||'QC Pending'} · ${l||'ALL'}`;
+  document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${l}`;
   updateResetBtn();
 }
 
@@ -978,9 +996,9 @@ function processData(rows, ents){
   _entMap={};
   _ents.forEach(e=>{if(e.id) _entMap[e.id]=e;});
   _activeType=null;
-  renderMetrics(rows);
+  _activeStatus=null; // reset to default (QC Pending via f())
   renderTypeCards();
-  rerender();
+  rerender(); // rerender calls renderMetrics(f()) internally
 }
 
 // ── THEME ─────────────────────────────────────────────────────────
