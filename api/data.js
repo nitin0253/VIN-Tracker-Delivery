@@ -36,6 +36,8 @@ function hoursAgo(ts, now) {
 async function buildCache() {
   if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
   const now = Date.now();
+
+  // Fetch VIN data and Enterprise/POC data in parallel
   const [vinResp, entResp] = await Promise.all([
     fetch(VIN_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
     fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
@@ -43,66 +45,69 @@ async function buildCache() {
   if (!vinResp.ok) throw new Error(`VIN CSV ${vinResp.status}`);
   const rawVin = parseCSV(await vinResp.text());
 
-  // Enterprise lookup map
+  // Build enterprise lookup map with POC email_id
   const entMap = {};
   if (entResp.ok) {
     const rawEnt = parseCSV(await entResp.text());
     rawEnt.forEach(r => {
-      const id = pick(r, 'dt.enterprise_id', 'enterprise_id');
-      if (id) entMap[id] = {
-        name:    pick(r, 'name'),
-        type:    pick(r, 'type'),
-        stage:   pick(r, 'stage'),
-        website: pick(r, 'website_url'),
-        poc:     pick(r, 'poc_id'),
-        email:   pick(r, 'email_id'),
-      };
+      const id = pick(r, 'dt.enterprise_id', 'enterprise_id', 'enterpriseId');
+      if (id) {
+        entMap[id] = {
+          name:    pick(r, 'name', 'enterprise_name'),
+          type:    pick(r, 'type'),
+          stage:   pick(r, 'stage'),
+          website: pick(r, 'website_url'),
+          poc:     pick(r, 'poc_id', 'poc'),
+          email:   pick(r, 'email_id', 'email', 'poc_email'),
+        };
+      }
     });
   }
 
-  const cols = rawVin.length ? Object.keys(rawVin[0]) : [];
   vinCache = rawVin.map(r => {
     const eid = pick(r, 'enterpriseId');
+    const tid = pick(r, 'teamId');
     const ent = entMap[eid] || {};
     return {
-      vin:        pick(r, 'vinName'),
-      dealerVinId:pick(r, 'dealerVinId'),
+      vin:          pick(r, 'vinName'),
+      dealerVinId:  pick(r, 'dealerVinId'),
       eid,
-      entName:    ent.name  || pick(r, 'enterprise_name') || eid,
-      entType:    ent.type  || '',
-      entStage:   ent.stage || '',
-      entEmail:   ent.email || '',
-      teamId:     pick(r, 'teamId'),
-      teamName:   pick(r, 'team_name'),
-      teamType:   pick(r, 'team_type'),
-      make:       pick(r, 'make'),
-      model:      pick(r, 'model'),
-      year:       pick(r, 'year'),
-      trim:       pick(r, 'trim'),
-      stock:      pick(r, 'stockNumber'),
-      platform:   pick(r, 'platform'),
-      type:       pick(r, 'type') || pick(r, 'platform'),
-      status:     pick(r, 'status_overallStatus', 'status'),
-      rb:         pick(r, 'reason_bucket'),
-      holdReason: pick(r, 'hold_reason'),
-      hasPhotos:  pick(r, 'has_photos'),
-      after24:    pick(r, 'after_24_hrs'),
-      imgCount:   parseInt(pick(r, 'image_count')) || 0,
-      vidCount:   parseInt(pick(r, 'video_count')) || 0,
-      outImgs:    parseInt(pick(r, 'output_image_count')) || 0,
+      entName:      ent.name  || pick(r, 'enterprise_name') || eid,
+      entType:      ent.type  || '',
+      entStage:     ent.stage || '',
+      entEmail:     ent.email || '',          // POC email from enterprise details CSV
+      teamId:       tid,
+      teamName:     pick(r, 'team_name'),
+      teamType:     pick(r, 'team_type'),
+      make:         pick(r, 'make'),
+      model:        pick(r, 'model'),
+      year:         pick(r, 'year'),
+      trim:         pick(r, 'trim'),
+      stock:        pick(r, 'stockNumber'),
+      platform:     pick(r, 'platform'),
+      type:         pick(r, 'type') || pick(r, 'platform'),
+      status:       pick(r, 'status_overallStatus', 'status'),
+      rb:           pick(r, 'reason_bucket'),
+      holdReason:   pick(r, 'hold_reason'),
+      hasPhotos:    pick(r, 'has_photos'),
+      after24:      pick(r, 'after_24_hrs'),
+      imgCount:     parseInt(pick(r, 'image_count')) || 0,
+      vidCount:     parseInt(pick(r, 'video_count')) || 0,
+      outImgs:      parseInt(pick(r, 'output_image_count')) || 0,
       overallScore: pick(r, 'overall_score'),
-      vinScore:   pick(r, 'vin_score'),
-      price:      pick(r, 'sellingPrice'),
-      thumbnail:  pick(r, 'thumbnail_url'),
-      vdpUrl:     pick(r, 'vdp_url'),
-      websiteUrl: pick(r, 'website_listing_url'),
-      vinCreation:pick(r, 'vinCreation'),
-      receivedAt: pick(r, 'receivedAt'),
-      sentAt:     pick(r, 'sentAt'),
-      hrsVc:      hoursAgo(pick(r, 'vinCreation'), now),
-      hrsRecv:    hoursAgo(pick(r, 'receivedAt'), now),
+      vinScore:     pick(r, 'vin_score'),
+      price:        pick(r, 'sellingPrice'),
+      thumbnail:    pick(r, 'thumbnail_url'),
+      vdpUrl:       pick(r, 'vdp_url'),
+      websiteUrl:   pick(r, 'website_listing_url'),
+      vinCreation:  pick(r, 'vinCreation'),
+      receivedAt:   pick(r, 'receivedAt'),
+      sentAt:       pick(r, 'sentAt'),
+      hrsVc:        hoursAgo(pick(r, 'vinCreation'), now),
+      hrsRecv:      hoursAgo(pick(r, 'receivedAt'), now),
     };
   });
+
   entCache = Object.entries(entMap).map(([id, e]) => ({ id, ...e }));
   lastFetch = now;
   return { vinCache, entCache };
@@ -119,9 +124,12 @@ export default async function handler(req, res) {
       return res.status(200).json({
         totalVins: rows.length, totalEnts: ents.length,
         sampleVin: rows[0], sampleEnt: ents[0],
-        uniqueRB:   [...new Set(rows.map(r => r.rb).filter(Boolean))],
-        uniqueType: [...new Set(rows.map(r => r.type).filter(Boolean))],
+        uniqueRB:       [...new Set(rows.map(r => r.rb).filter(Boolean))],
+        uniqueType:     [...new Set(rows.map(r => r.type).filter(Boolean))],
         uniqueTeamType: [...new Set(rows.map(r => r.teamType).filter(Boolean))],
+        pocEmailSample: rows.filter(r => r.entEmail).slice(0, 5).map(r => ({
+          eid: r.eid, entName: r.entName, email: r.entEmail
+        })),
       });
     }
     res.status(200).json({ rows, ents, total: rows.length, lastSynced: new Date(lastFetch).toISOString() });
