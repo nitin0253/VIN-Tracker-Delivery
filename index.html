@@ -446,7 +446,11 @@ const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472
 let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null, _activeTeamType=null, _activeStage=null, _activeHoldReason=null, _activeStatus=null, _drawerRows=[], _tblData={};
 let _sortState={}; // {tbodyId: {col, dir}}
 
-function mkB(){ return {b0:0,b5:0,b9:0,b13:0,b24:0,total:0}; }
+function mkB(){ 
+  const o = {total:0};
+  BKTS.forEach(b => o[b.k] = 0);
+  return o;
+}
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
 function f(){
   // Default: show QC Pending. QC Hold card click switches to QC Hold.
