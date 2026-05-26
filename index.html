@@ -50,9 +50,16 @@ a{color:inherit;text-decoration:none}
 .tag{display:inline-block;font-size:10px;font-family:var(--f-mono);padding:3px 9px;border-radius:4px;letter-spacing:.8px;text-transform:uppercase}
 .tag-blue{background:var(--ag);border:1px solid rgba(92,124,250,.25);color:var(--accent)}
 .tag-red{background:rgba(240,81,110,.1);border:1px solid rgba(240,81,110,.25);color:var(--red)}
-.dl-strip{display:flex;gap:4px}
-.dl-btn{padding:4px 10px;border-radius:5px;font-size:9px;font-family:var(--f-mono);background:var(--card2);border:1px solid var(--rim);color:var(--t3);transition:all .14s;letter-spacing:.5px}
-.dl-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dl-dropdown{position:relative;display:inline-block}
+.dl-trigger{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;background:var(--card2);border:1px solid var(--rim);color:var(--t2);font-size:11px;font-family:var(--f-mono);font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:.3px;white-space:nowrap}
+.dl-trigger:hover{border-color:var(--accent);color:var(--accent);background:var(--ag2)}
+.dl-trigger svg{transition:transform .2s}
+.dl-dropdown.open .dl-trigger svg{transform:rotate(180deg)}
+.dl-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--rim2);border-radius:10px;padding:4px;min-width:130px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateY(-6px) scale(.97);pointer-events:none;transition:all .15s cubic-bezier(.4,0,.2,1)}
+.dl-dropdown.open .dl-menu{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.dl-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px;border-radius:7px;font-size:11px;font-family:var(--f-mono);color:var(--t2);cursor:pointer;transition:background .12s;text-align:left;white-space:nowrap}
+.dl-item:hover{background:var(--card2);color:var(--t1)}
+.dl-item-icon{font-size:13px;width:16px;text-align:center}
 
 /* METRIC CARDS */
 .metric-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
@@ -697,8 +704,19 @@ function openDrawer(title,rows,rowData){
   _drawerRows=rows;
   document.getElementById('drw-title').textContent=title;
   document.getElementById('drw-subtitle').textContent=`${rows.length} VINs`;
-  document.getElementById('drw-dl').innerHTML=['CSV','JSON','XLSX'].map(f=>
-    `<button class="dl-btn" onclick="dlDrawer('${f.toLowerCase()}')">${f}</button>`).join('');
+  document.getElementById('drw-dl').innerHTML=`
+    <div class="dl-dropdown" id="drw-dl-dd">
+      <button class="dl-trigger" onclick="toggleDl('drw-dl-dd')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="dl-menu">
+        <button class="dl-item" onclick="dlDrawer('csv');closeDl('drw-dl-dd')"><span class="dl-item-icon">📄</span>CSV</button>
+        <button class="dl-item" onclick="dlDrawer('json');closeDl('drw-dl-dd')"><span class="dl-item-icon">{ }</span>JSON</button>
+        <button class="dl-item" onclick="dlDrawer('xlsx');closeDl('drw-dl-dd')"><span class="dl-item-icon">📊</span>XLSX</button>
+      </div>
+    </div>`;
   const withImg=rows.filter(r=>r.imgCount>0).length, over24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
   const avgHrs=rows.filter(r=>r.hrsRecv!=null).reduce((s,r)=>s+r.hrsRecv,0)/(rows.filter(r=>r.hrsRecv!=null).length||1);
   const body=document.getElementById('drw-body');
@@ -817,7 +835,19 @@ function tblCSV(d,extraKeys,extraLabels){
   return[allL.join(','),...d.map(r=>allK.map(k=>r[k]??'').join(','))].join('\n');
 }
 function mkDl(id,pre,extraKeys,extraLabels){
-  document.getElementById(id).innerHTML=['CSV','JSON','XLSX'].map(f=>`<button class="dl-btn" onclick="dlTbl('${id}','${f.toLowerCase()}','${pre}')">${f}</button>`).join('');
+  document.getElementById(id).innerHTML=`
+    <div class="dl-dropdown" id="${id}-dd">
+      <button class="dl-trigger" onclick="toggleDl('${id}-dd')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="dl-menu">
+        <button class="dl-item" onclick="dlTbl('${id}','csv','${pre}');closeDl('${id}-dd')"><span class="dl-item-icon">📄</span>CSV</button>
+        <button class="dl-item" onclick="dlTbl('${id}','json','${pre}');closeDl('${id}-dd')"><span class="dl-item-icon">{ }</span>JSON</button>
+        <button class="dl-item" onclick="dlTbl('${id}','xlsx','${pre}');closeDl('${id}-dd')"><span class="dl-item-icon">📊</span>XLSX</button>
+      </div>
+    </div>`;
 }
 function dlTbl(id,fmt,pre){
   const d=_tblData[id]; if(!d?.length)return;
@@ -1037,6 +1067,20 @@ async function loadData(){
     document.getElementById('uf-msg').textContent=`Fetch failed: ${err.message}`;
   }
 }
+
+// ── DROPDOWN HELPERS ─────────────────────────────────────────────
+function toggleDl(id){
+  const dd=document.getElementById(id); if(!dd)return;
+  const isOpen=dd.classList.contains('open');
+  document.querySelectorAll('.dl-dropdown.open').forEach(d=>d.classList.remove('open'));
+  if(!isOpen) dd.classList.add('open');
+}
+function closeDl(id){
+  const dd=document.getElementById(id); if(dd) dd.classList.remove('open');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.dl-dropdown')) document.querySelectorAll('.dl-dropdown.open').forEach(d=>d.classList.remove('open'));
+});
 
 loadData();
 </script>
