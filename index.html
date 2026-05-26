@@ -290,7 +290,7 @@ td:last-child{padding-right:16px;text-align:right}
     </div>
     <div class="chart-pair">
       <div class="chart-panel">
-        <div class="chart-panel-title">By Team Type <span id="ch-tt-clear" onclick="_activeTeamType=null;rerender()" style="display:none;font-size:9px;font-family:var(--f-mono);color:var(--accent);cursor:pointer;margin-left:8px">✕ clear</span></div>
+        <div class="chart-panel-title">By Customer Segment <span id="ch-tt-clear" onclick="_activeCustomerSegment=null;rerender()" style="display:none;font-size:9px;font-family:var(--f-mono);color:var(--accent);cursor:pointer;margin-left:8px">✕ clear</span></div>
         <div class="chart-panel-sub" id="ch-tt-sub"></div>
         <div class="bar-list" id="ch-tt"></div>
       </div>
@@ -315,7 +315,7 @@ td:last-child{padding-right:16px;text-align:right}
             <th style="min-width:200px"># Enterprise</th>
             <th style="min-width:120px">Enterprise ID</th>
             <th style="min-width:80px">Stage</th>
-            <th style="min-width:120px">Team Type</th>
+            <th style="min-width:140px">Customer Segment</th>
             <th style="min-width:160px">POC Email</th>
             <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
             <th>Total</th>
@@ -338,7 +338,7 @@ td:last-child{padding-right:16px;text-align:right}
           <thead><tr>
             <th style="min-width:200px"># Team</th>
             <th style="min-width:120px">Team ID</th>
-            <th style="min-width:100px">Type</th>
+            <th style="min-width:140px">Customer Segment</th>
             <th style="min-width:160px">POC Email</th>
             <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
             <th>Total</th>
@@ -380,7 +380,7 @@ const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472
 
 // ── STATE ─────────────────────────────────────────────────────────
 let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null,
-    _activeTeamType=null, _activeStage=null, _activeHoldReason=null,
+    _activeCustomerSegment=null, _activeStage=null, _activeHoldReason=null,
     _activeStatus=null, _drawerRows=[], _tblData={}, _sortState={};
 
 function mkB(){ const o={total:0}; BKTS.forEach(b=>o[b.k]=0); return o; }
@@ -391,7 +391,7 @@ function f(){
   let rows = _rows.filter(r=>(r.rb||'').trim()===sf);
   if(_activeType)  rows=rows.filter(r=>(r.type||'').trim()===_activeType);
   if(_activeBkt){  const b=BKTS.find(b=>b.k===_activeBkt); if(b) rows=rows.filter(r=>{const h=r.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);}); }
-  if(_activeTeamType) rows=rows.filter(r=>(r.teamType||'').trim()===_activeTeamType);
+  if(_activeCustomerSegment) rows=rows.filter(r=>(r.customerSegment||'').trim()===_activeCustomerSegment);
   if(_activeStage)    rows=rows.filter(r=>{const ent=_entMap[r.eid]||{};return(ent.stage||'').trim()===_activeStage;});
   if(_activeHoldReason) rows=rows.filter(r=>(r.holdReason||'').trim()===_activeHoldReason);
   return rows;
@@ -400,7 +400,7 @@ function lbl(){
   const parts=[_activeStatus||'QC Pending'];
   if(_activeType) parts.push(_activeType);
   if(_activeBkt){const b=BKTS.find(b=>b.k===_activeBkt);if(b)parts.push(b.l);}
-  if(_activeTeamType) parts.push(_activeTeamType);
+  if(_activeCustomerSegment) parts.push(_activeCustomerSegment);
   if(_activeStage) parts.push(_activeStage);
   if(_activeHoldReason) parts.push(_activeHoldReason.length>30?_activeHoldReason.slice(0,28)+'…':_activeHoldReason);
   return parts.join(' · ');
@@ -535,17 +535,18 @@ function renderCharts(rows){
     if(_activeBkt){const b=BKTS.find(b=>b.k===_activeBkt);if(b)r=r.filter(x=>{const h=x.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);});}
     return r;
   })();
-  const ttMap={}; baseRows.forEach(r=>{const tt=(r.teamType||'Unknown').trim();ttMap[tt]=(ttMap[tt]||0)+1;});
-  const ttClick=Object.assign(name=>{_activeTeamType=_activeTeamType===name?null:name;rerender();},{active:_activeTeamType});
+  // By Customer Segment
+  const ttMap={}; baseRows.forEach(r=>{const tt=(r.customerSegment||'Unknown').trim();ttMap[tt]=(ttMap[tt]||0)+1;});
+  const ttClick=Object.assign(name=>{_activeCustomerSegment=_activeCustomerSegment===name?null:name;rerender();},{active:_activeCustomerSegment});
   drawBars('ch-tt','ch-tt-sub',Object.entries(ttMap).sort((a,b)=>b[1]-a[1]),`${baseRows.length} VINs · click to filter`,ttClick);
-  document.getElementById('ch-tt-clear').style.display=_activeTeamType?'inline':'none';
+  document.getElementById('ch-tt-clear').style.display=_activeCustomerSegment?'inline':'none';
 
   const holdRows=_rows.filter(r=>(r.rb||'').trim()==='QC Hold');
   const hrMap={}; holdRows.forEach(r=>{const hr=(r.holdReason||'').trim();if(hr)hrMap[hr]=(hrMap[hr]||0)+1;});
   const hrEntries=Object.entries(hrMap).sort((a,b)=>b[1]-a[1]);
   const hrClick=Object.assign(name=>{
     _activeHoldReason=_activeHoldReason===name?null:name;
-    if(_activeHoldReason&&_activeStatus!=='QC Hold'){_activeStatus='QC Hold';_activeType=null;_activeBkt=null;_activeTeamType=null;_activeStage=null;syncTypeActive();}
+    if(_activeHoldReason&&_activeStatus!=='QC Hold'){_activeStatus='QC Hold';_activeType=null;_activeBkt=null;_activeCustomerSegment=null;_activeStage=null;syncTypeActive();}
     rerender();
   },{active:_activeHoldReason});
   drawBars('ch-hr','ch-hr-sub',hrEntries,hrEntries.length?`${holdRows.filter(r=>(r.holdReason||'').trim()).length} QC Hold VINs · click to filter`:'No QC Hold VINs',hrEntries.length?hrClick:null);
@@ -575,7 +576,7 @@ function renderEntTbl(data){
 
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
-    const colKeys=['name','id','stage','teamType','email',...BKTS.map(b=>b.k),'total'];
+    const colKeys=['name','id','stage','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
       const ck=colKeys[i]; if(!ck)return;
@@ -589,7 +590,7 @@ function renderEntTbl(data){
     const ent=_entMap[row.eid]||{};
     const stage=ent.stage||row._rows[0]?.entStage||'';
     const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
-    const teamTypes=[...new Set(row._rows.map(r=>r.teamType).filter(Boolean))];
+    const customerSegments=[...new Set(row._rows.map(r=>r.customerSegment).filter(Boolean))];
     const pocEmail=ent.email||row._rows[0]?.entEmail||'';
     const tr=document.createElement('tr');
     tr.innerHTML=`
@@ -607,7 +608,7 @@ function renderEntTbl(data){
         </div>
       </td>
       <td>${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
-      <td><span style="font-size:10px;color:var(--t2)">${teamTypes.join(', ')||'—'}</span></td>
+      <td><span style="font-size:10px;color:var(--t2)">${customerSegments.join(', ')||'—'}</span></td>
       <td>
         <div style="display:flex;align-items:center;gap:4px">
           ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
@@ -641,7 +642,7 @@ function renderTeamTbl(data){
 
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
-    const colKeys=['name','id','teamType','email',...BKTS.map(b=>b.k),'total'];
+    const colKeys=['name','id','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
       const ck=colKeys[i]; if(!ck)return;
@@ -652,7 +653,6 @@ function renderTeamTbl(data){
 
   sorted.forEach((row,i)=>{
     const rnkClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-    // POC email: from enterprise lookup via rows
     const pocEmail=row._rows?.[0]?.entEmail||'';
     const tr=document.createElement('tr');
     tr.innerHTML=`
@@ -669,7 +669,7 @@ function renderTeamTbl(data){
           ${cbBtn(row.teamId,'Copy team ID')}
         </div>
       </td>
-      <td><span style="font-size:10px;color:var(--t2)">${row.teamType||'—'}</span></td>
+      <td><span style="font-size:10px;color:var(--t2)">${row.customerSegment||'—'}</span></td>
       <td>
         <div style="display:flex;align-items:center;gap:4px">
           ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
@@ -790,21 +790,21 @@ function renderDrawerRows(){
 // ── FILTER HELPERS ────────────────────────────────────────────────
 function toggleHoldFilter(){
   _activeStatus=_activeStatus==='QC Hold'?null:'QC Hold';
-  _activeType=null;_activeBkt=null;_activeTeamType=null;_activeStage=null;_activeHoldReason=null;
+  _activeType=null;_activeBkt=null;_activeCustomerSegment=null;_activeStage=null;_activeHoldReason=null;
   syncTypeActive(); rerender();
 }
 function resetAllFilters(){
   _activeStatus=null;_activeType=null;_activeBkt=null;
-  _activeTeamType=null;_activeStage=null;_activeHoldReason=null;
+  _activeCustomerSegment=null;_activeStage=null;_activeHoldReason=null;
   syncTypeActive(); rerender();
 }
-function anyFilterActive(){return!!(_activeStatus||_activeType||_activeBkt||_activeTeamType||_activeStage||_activeHoldReason);}
+function anyFilterActive(){return!!(_activeStatus||_activeType||_activeBkt||_activeCustomerSegment||_activeStage||_activeHoldReason);}
 function updateResetBtn(){const b=document.getElementById('reset-btn');if(b)b.style.display=anyFilterActive()?'inline-flex':'none';}
 
 // ── DOWNLOAD ──────────────────────────────────────────────────────
 function dl(blob,n){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-const DL_KEYS=['vin','entName','teamName','type','teamType','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
-const DL_LABELS=['VIN','Enterprise','Team','Type','Team Type','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
+const DL_KEYS=['vin','entName','teamName','type','customerSegment','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
+const DL_LABELS=['VIN','Enterprise','Team','Type','Customer Segment','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
 function dlDrawer(fmt){
   if(!_drawerRows.length)return;
   if(fmt==='csv'){const c=[DL_LABELS.join(','),..._drawerRows.map(r=>DL_KEYS.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');dl(new Blob([c],{type:'text/csv'}),'qc-vins.csv');}
@@ -822,8 +822,8 @@ function mkDl(id,pre,extraKeys,extraLabels){
 function dlTbl(id,fmt,pre){
   const d=_tblData[id]; if(!d?.length)return;
   const isEnt=id==='dl-ent';
-  const extraK=isEnt?['eid','stage','teamType','email']:['teamId','teamType','email'];
-  const extraL=isEnt?['Enterprise ID','Stage','Team Type','POC Email']:['Team ID','Type','POC Email'];
+  const extraK=isEnt?['eid','stage','customerSegment','email']:['teamId','customerSegment','email'];
+  const extraL=isEnt?['Enterprise ID','Stage','Customer Segment','POC Email']:['Team ID','Customer Segment','POC Email'];
   if(fmt==='csv') dl(new Blob([tblCSV(d,extraK,extraL)],{type:'text/csv'}),`${pre}.csv`);
   else if(fmt==='json') dl(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),`${pre}.json`);
   else{
@@ -848,7 +848,6 @@ function rerender(){
     const e=r.entName||r.eid||'Unknown';
     if(!eMap[e]) eMap[e]={name:e,eid:r.eid,email:r.entEmail||'',...mkB(),_rows:[]};
     addB(eMap[e],r.hrsRecv); eMap[e]._rows.push(r);
-    // merge email if found later
     if(!eMap[e].email&&r.entEmail) eMap[e].email=r.entEmail;
   });
   const eData=Object.values(eMap).sort((a,b)=>b.total-a.total);
@@ -860,7 +859,7 @@ function rerender(){
   const tMap={};
   rows.forEach(r=>{
     const t=r.teamName||r.teamId||'Unknown';
-    if(!tMap[t]) tMap[t]={name:t,teamId:r.teamId,teamType:r.teamType||'—',email:r.entEmail||'',...mkB(),_rows:[]};
+    if(!tMap[t]) tMap[t]={name:t,teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
     addB(tMap[t],r.hrsRecv); tMap[t]._rows.push(r);
     if(!tMap[t].email&&r.entEmail) tMap[t].email=r.entEmail;
   });
@@ -878,7 +877,6 @@ function processData(rows,ents){
   _rows=rows; _ents=ents||[];
   _entMap={};
   _ents.forEach(e=>{if(e.id) _entMap[e.id]=e;});
-  // Also build entMap from row data for email lookup
   rows.forEach(r=>{
     if(r.eid&&!_entMap[r.eid]) _entMap[r.eid]={name:r.entName,type:r.entType,stage:r.entStage,email:r.entEmail||''};
     else if(r.eid&&_entMap[r.eid]&&!_entMap[r.eid].email&&r.entEmail) _entMap[r.eid].email=r.entEmail;
@@ -934,7 +932,8 @@ function handleUpload(evt){
       return{
         vin:pk(r,'vinName'),eid:pk(r,'enterpriseId'),
         entName:pk(r,'enterprise_name')||pk(r,'enterpriseId'),
-        teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),teamType:pk(r,'team_type'),
+        teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),
+        customerSegment:pk(r,'customer_segment'),
         make:pk(r,'make'),model:pk(r,'model'),year:pk(r,'year'),
         type:pk(r,'type'),rb:pk(r,'reason_bucket'),holdReason:pk(r,'hold_reason'),
         imgCount:parseInt(pk(r,'image_count'))||0,thumbnail:pk(r,'thumbnail_url'),
