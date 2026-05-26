@@ -151,6 +151,13 @@ td:last-child{padding-right:16px;text-align:right}
 .copy-btn:hover{background:var(--ag);border-color:var(--accent);color:var(--accent)}
 .copy-btn.copied{background:rgba(0,200,150,.15);border-color:var(--green);color:var(--green)}
 
+/* LINK BUTTONS */
+.link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:9px;font-family:var(--f-mono);font-weight:600;border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;line-height:1.4}
+.link-btn-vdp{color:var(--accent);border-color:rgba(92,124,250,.3);background:var(--ag2)}
+.link-btn-vdp:hover{background:var(--ag);border-color:var(--accent)}
+.link-btn-console{color:var(--green);border-color:rgba(0,200,150,.3);background:rgba(0,200,150,.06)}
+.link-btn-console:hover{background:rgba(0,200,150,.12);border-color:var(--green)}
+
 /* DRAWER */
 .drw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;backdrop-filter:blur(4px)}
 .drw{position:fixed;right:0;top:0;bottom:0;width:min(820px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
@@ -740,6 +747,7 @@ function openDrawer(title,rows,rowData){
             <th>Hold</th>
             <th onclick="sortDrawer('hrsRecv')">Recv Hrs</th>
             <th onclick="sortDrawer('imgCount')">Imgs</th>
+            <th style="text-align:center">Links</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -777,7 +785,8 @@ function renderDrawerRows(){
     const stage=ent.stage||r.entStage||'';
     const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
     const vinVal=r.vin||'', entVal=r.entName||r.eid||'', teamVal=r.teamName||'';
-    return`<tr style="cursor:${r.vdpUrl?'pointer':'default'}" onclick="${r.vdpUrl?`window.open('${r.vdpUrl}','_blank')`:''}">
+    const consoleUrl=(r.dealerVinId&&r.eid&&r.teamId)?`https://console.spyne.ai/inventory/v2/listings/${r.dealerVinId}?enterprise_id=${r.eid}&team_id=${r.teamId}`:'';
+    return`<tr>
       <td><div class="vin-cell">
         ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:'' }
         <span style="font-family:var(--f-mono);font-size:9px">${vinVal||'—'}</span>
@@ -801,6 +810,16 @@ function renderDrawerRows(){
       <td style="font-size:9px;color:var(--amber)">${r.holdReason||'—'}</td>
       <td style="font-family:var(--f-mono)">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
       <td style="font-family:var(--f-mono)">${r.imgCount||0}</td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:nowrap">
+          ${r.vdpUrl?`<a class="link-btn link-btn-vdp" href="${r.vdpUrl}" target="_blank" onclick="event.stopPropagation()" title="Open VDP">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            VDP</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
+          ${consoleUrl?`<a class="link-btn link-btn-console" href="${consoleUrl}" target="_blank" onclick="event.stopPropagation()" title="Open in Spyne Console">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Console</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -998,7 +1017,7 @@ function handleUpload(evt){
     const rows=parsed.slice(1).filter(vals=>vals.some(v=>v.trim())).map(vals=>{
       const r={}; hdrs.forEach((h,i)=>r[h]=vals[i]??'');
       return{
-        vin:pk(r,'vinName'),eid:pk(r,'enterpriseId'),
+        vin:pk(r,'vinName'),dealerVinId:pk(r,'dealerVinId'),eid:pk(r,'enterpriseId'),
         entName:pk(r,'enterprise_name')||pk(r,'enterpriseId'),
         teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),
         customerSegment:pk(r,'customer_segment'),
@@ -1040,6 +1059,7 @@ async function loadData(){
     const _ha=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(_now-d)/3600000;return h>=0?h:null;};
     const normRows=j.rows.map(r=>({
       vin:r.vin||r.vinName||'',
+      dealerVinId:r.dealerVinId||'',
       eid:r.eid||r.enterpriseId||'',
       entName:r.entName||r.enterprise_name||r.enterpriseId||'',
       teamId:r.teamId||'',
