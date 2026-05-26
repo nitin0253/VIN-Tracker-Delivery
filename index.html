@@ -917,17 +917,55 @@ function showSkeleton(){
 }
 
 // ── UPLOAD FALLBACK ───────────────────────────────────────────────
+// ── PROPER RFC-4180 CSV PARSER ────────────────────────────────────
+function parseCSVLine(line){
+  const fields=[]; let cur='', inQ=false, i=0;
+  while(i<line.length){
+    const c=line[i];
+    if(inQ){
+      if(c==='"'&&line[i+1]==='"'){cur+='"';i+=2;}
+      else if(c==='"'){inQ=false;i++;}
+      else{cur+=c;i++;}
+    } else {
+      if(c==='"'){inQ=true;i++;}
+      else if(c===','){fields.push(cur.trim());cur='';i++;}
+      else{cur+=c;i++;}
+    }
+  }
+  fields.push(cur.trim());
+  return fields;
+}
+function parseCSV(text){
+  // Handle \r\n and \n; respect quoted newlines
+  const rows=[]; let cur='', inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'&&text[i+1]==='"'){cur+='"';i++;}
+      else if(c==='"') inQ=false;
+      else cur+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c==='\r'&&text[i+1]==='\n'){rows.push(cur);cur='';i++;}
+      else if(c==='\n'){rows.push(cur);cur='';}
+      else cur+=c;
+    }
+  }
+  if(cur.trim()) rows.push(cur);
+  return rows.map(parseCSVLine);
+}
+
 function handleUpload(evt){
   const file=evt.target.files[0]; if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const lines=e.target.result.trim().split(/\r?\n/);
-    const hdrs=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+    const parsed=parseCSV(e.target.result);
+    if(parsed.length<2){alert('CSV appears empty');return;}
+    const hdrs=parsed[0].map(h=>h.replace(/^"|"$/g,'').trim());
     const pk=(r,...ns)=>{for(const n of ns){const v=r[n];if(v?.trim())return v.trim();}return '';};
     const now=Date.now();
     const hoursAgo=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(now-d)/3600000;return h>=0?h:null;};
-    const rows=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const vals=line.split(',').map(v=>v.replace(/^"|"$/g,'').trim());
+    const rows=parsed.slice(1).filter(vals=>vals.some(v=>v.trim())).map(vals=>{
       const r={}; hdrs.forEach((h,i)=>r[h]=vals[i]??'');
       return{
         vin:pk(r,'vinName'),eid:pk(r,'enterpriseId'),
@@ -967,9 +1005,31 @@ async function loadData(){
     if(j.error) throw new Error(j.error);
     if(!j.rows?.length) throw new Error('0 rows');
     if(j.lastSynced) document.getElementById('sy').textContent='Synced '+new Date(j.lastSynced).toLocaleTimeString();
+    // Normalize server rows: map snake_case/alternate field names to camelCase
+    const _now=Date.now();
+    const _ha=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(_now-d)/3600000;return h>=0?h:null;};
+    const normRows=j.rows.map(r=>({
+      vin:r.vin||r.vinName||'',
+      eid:r.eid||r.enterpriseId||'',
+      entName:r.entName||r.enterprise_name||r.enterpriseId||'',
+      teamId:r.teamId||'',
+      teamName:r.teamName||r.team_name||'',
+      customerSegment:(r.customerSegment||r.customer_segment||'').trim(),
+      make:r.make||'',model:r.model||'',year:r.year||'',
+      type:r.type||'',rb:r.rb||r.reason_bucket||'',
+      holdReason:r.holdReason||r.hold_reason||'',
+      imgCount:parseInt(r.imgCount||r.image_count)||0,
+      thumbnail:r.thumbnail||r.thumbnail_url||'',
+      vdpUrl:r.vdpUrl||r.vdp_url||'',
+      entEmail:r.entEmail||r.email_id||r.poc_email||'',
+      entStage:r.entStage||r.stage||'',
+      entType:r.entType||'',
+      hrsRecv:r.hrsRecv!=null?r.hrsRecv:_ha(r.receivedAt),
+      hrsVc:r.hrsVc!=null?r.hrsVc:_ha(r.vinCreation),
+    }));
     document.getElementById('loading').style.display='none';
     dashEl.style.display='block';
-    processData(j.rows,j.ents||[]);
+    processData(normRows,j.ents||[]);
     startAutoRefresh();
   }catch(err){
     document.getElementById('loading').style.display='none';
