@@ -131,10 +131,11 @@ td:last-child{padding-right:16px;text-align:right}
 .copy-btn:hover{background:var(--ag);border-color:var(--accent);color:var(--accent)}
 .copy-btn.copied{background:rgba(0,200,150,.15);border-color:var(--green);color:var(--green)}
 /* CRM status chip */
-.crm-chip{display:inline-block;font-family:var(--f-mono);font-size:8px;padding:1px 6px;border-radius:3px;white-space:nowrap}
-.crm-unassigned{background:rgba(136,136,136,.12);border:1px solid rgba(136,136,136,.25);color:var(--t3)}
-.crm-inprogress{background:rgba(92,124,250,.12);border:1px solid rgba(92,124,250,.3);color:var(--accent)}
-.crm-onhold{background:rgba(240,81,110,.1);border:1px solid rgba(240,81,110,.25);color:var(--red)}
+.crm-chip{display:inline-block;font-family:var(--f-mono);font-size:8px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:.3px}
+.crm-unassigned{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:#f5a623}
+.crm-inprogress{background:rgba(92,124,250,.2);border:1px solid rgba(92,124,250,.5);color:#7da4ff}
+.crm-onhold{background:rgba(240,81,110,.18);border:1px solid rgba(240,81,110,.45);color:#f0516e}
+.crm-assigned{background:rgba(0,200,150,.15);border:1px solid rgba(0,200,150,.4);color:#00c896}
 .link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:9px;font-family:var(--f-mono);font-weight:600;border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;line-height:1.4}
 .link-btn-vdp{color:var(--accent);border-color:rgba(92,124,250,.3);background:var(--ag2)}
 .link-btn-vdp:hover{background:var(--ag);border-color:var(--accent)}
@@ -385,7 +386,7 @@ function cbBtn(val,title='Copy'){
 // CRM status chip helper
 function crmChip(v){
   if(!v)return'<span style="color:var(--t3)">—</span>';
-  const cls=v.includes('unassigned')?'crm-unassigned':v.includes('inprogress')||v.includes('in_progress')?'crm-inprogress':v.includes('onhold')||v.includes('on_hold')?'crm-onhold':'crm-unassigned';
+  const cls=v==='qc_assigned'||v.includes('assigned')&&!v.includes('un')?'crm-assigned':v.includes('unassigned')?'crm-unassigned':v.includes('inprogress')||v.includes('in_progress')?'crm-inprogress':v.includes('onhold')||v.includes('on_hold')?'crm-onhold':'crm-unassigned';
   return`<span class="crm-chip ${cls}">${v}</span>`;
 }
 
