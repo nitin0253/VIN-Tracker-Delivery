@@ -37,7 +37,6 @@ async function buildCache() {
   if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
   const now = Date.now();
 
-  // Fetch VIN data and Enterprise/POC data in parallel
   const [vinResp, entResp] = await Promise.all([
     fetch(VIN_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
     fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
@@ -45,7 +44,6 @@ async function buildCache() {
   if (!vinResp.ok) throw new Error(`VIN CSV ${vinResp.status}`);
   const rawVin = parseCSV(await vinResp.text());
 
-  // Build enterprise lookup map with POC email_id
   const entMap = {};
   if (entResp.ok) {
     const rawEnt = parseCSV(await entResp.text());
@@ -78,7 +76,8 @@ async function buildCache() {
       entEmail:        ent.email || '',
       teamId:          tid,
       teamName:        pick(r, 'team_name'),
-      customerSegment: pick(r, 'customer_segment'),   // ← replaces team_type
+      customerSegment: pick(r, 'customer_segment'),
+      crmStatus:       pick(r, 'crm_status'),
       make:            pick(r, 'make'),
       model:           pick(r, 'model'),
       year:            pick(r, 'year'),
@@ -124,9 +123,10 @@ export default async function handler(req, res) {
       return res.status(200).json({
         totalVins: rows.length, totalEnts: ents.length,
         sampleVin: rows[0], sampleEnt: ents[0],
-        uniqueRB:               [...new Set(rows.map(r => r.rb).filter(Boolean))],
-        uniqueType:             [...new Set(rows.map(r => r.type).filter(Boolean))],
-        uniqueCustomerSegment:  [...new Set(rows.map(r => r.customerSegment).filter(Boolean))],
+        uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
+        uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],
+        uniqueCustomerSegment: [...new Set(rows.map(r => r.customerSegment).filter(Boolean))],
+        uniqueCrmStatus:       [...new Set(rows.map(r => r.crmStatus).filter(Boolean))],
         pocEmailSample: rows.filter(r => r.entEmail).slice(0, 5).map(r => ({
           eid: r.eid, entName: r.entName, email: r.entEmail
         })),
