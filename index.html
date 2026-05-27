@@ -18,8 +18,6 @@ button{font-family:'Inter',sans-serif;cursor:pointer;border:none;background:none
 .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
 a{color:inherit;text-decoration:none}
 .page{max-width:1540px;margin:0 auto;padding:0 28px 100px;position:relative;z-index:1}
-
-/* HEADER */
 .hdr{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;padding:22px 0 18px;border-bottom:1px solid var(--rim);margin-bottom:32px;background:var(--bg)}
 .hdr-brand{display:flex;align-items:center;gap:12px}
 .hdr-logo{height:54px;width:auto;flex-shrink:0;object-fit:contain;}
@@ -35,14 +33,10 @@ a{color:inherit;text-decoration:none}
 .refresh-btn:hover{opacity:.85;transform:translateY(-1px)}
 .refresh-btn svg{transition:transform .3s}
 .refresh-btn:hover svg{transform:rotate(180deg)}
-
-/* LOADING */
 #loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px}
 .load-ring{width:48px;height:48px;border-radius:50%;border:2px solid var(--rim);border-top-color:var(--accent);animation:spin .6s linear infinite;box-shadow:0 0 20px rgba(92,124,250,.2)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .load-label{font-size:11px;font-family:var(--f-mono);color:var(--t3);letter-spacing:1px}
-
-/* SECTION */
 .sec{margin-bottom:36px}
 .sec-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .sec-label{display:flex;align-items:center;gap:10px}
@@ -60,8 +54,6 @@ a{color:inherit;text-decoration:none}
 .dl-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px;border-radius:7px;font-size:11px;font-family:var(--f-mono);color:var(--t2);cursor:pointer;transition:background .12s;text-align:left;white-space:nowrap}
 .dl-item:hover{background:var(--card2);color:var(--t1)}
 .dl-item-icon{font-size:13px;width:16px;text-align:center}
-
-/* METRIC CARDS */
 .metric-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .metric{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s}
 .metric:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
@@ -69,8 +61,6 @@ a{color:inherit;text-decoration:none}
 .metric-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
 .metric-label{font-size:11px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:6px}
 .metric-sub{font-size:12px;color:var(--t2);margin-top:3px}
-
-/* HOURLY CARDS */
 .hour-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .hcard{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 18px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all .2s;cursor:pointer;user-select:none}
 .hcard:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--hc,var(--accent))}
@@ -82,8 +72,6 @@ a{color:inherit;text-decoration:none}
 .hcard-pct{font-size:12px;font-family:var(--f-mono);color:var(--t2);margin-top:6px}
 .hcard-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--rim)}
 .hcard-bar-fill{height:100%;width:0%;background:var(--hc,var(--accent));transition:width 1s cubic-bezier(.4,0,.2,1)}
-
-/* FILTER CARDS */
 .filter-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .fcard{background:var(--card);border:1px solid var(--rim);border-radius:14px;padding:14px 16px;cursor:pointer;user-select:none;transition:all .18s;box-shadow:var(--sh);position:relative;overflow:hidden}
 .fcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fc,var(--accent));border-radius:11px 0 0 11px}
@@ -93,8 +81,6 @@ a{color:inherit;text-decoration:none}
 .fc-name{font-size:10px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fc-val{font-size:24px;font-weight:800;letter-spacing:-1px;padding-left:6px;font-variant-numeric:tabular-nums}
 .fc-sub{font-size:11px;color:var(--t2);padding-left:6px;margin-top:3px}
-
-/* CHARTS */
 .chart-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .chart-panel{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:20px 22px;box-shadow:var(--sh)}
 .chart-panel-title{font-size:14px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px}
@@ -108,8 +94,6 @@ a{color:inherit;text-decoration:none}
 .bar-track{height:6px;background:var(--rim);border-radius:3px;overflow:hidden}
 .bar-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.34,1.56,.64,1)}
 .bar-count{font-size:12px;font-family:var(--f-mono);color:var(--t2);text-align:right}
-
-/* TABLES */
 .tbl-shell{background:var(--card);border:1px solid var(--rim);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
 .tbl-scroll{overflow-y:auto;max-height:440px}
 .tbl-scroll::-webkit-scrollbar{width:3px}
@@ -141,26 +125,23 @@ td:last-child{padding-right:16px;text-align:right}
 .ent-stage{font-size:9px;font-family:var(--f-mono);padding:1px 6px;border-radius:3px}
 .stage-live{background:rgba(0,229,160,.1);color:var(--green)}
 .stage-onboard{background:rgba(245,166,35,.1);color:var(--amber)}
-
-/* ID chip */
 .id-chip{display:inline-block;font-family:var(--f-mono);font-size:8px;color:var(--t3);background:var(--card2);border:1px solid var(--rim);border-radius:3px;padding:1px 5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
-/* POC email chip */
 .poc-chip{font-size:9px;font-family:var(--f-mono);color:var(--teal);background:rgba(45,212,207,.08);border:1px solid rgba(45,212,207,.2);border-radius:3px;padding:1px 6px;display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Copy button */
 .copy-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--card2);border:1px solid var(--rim);color:var(--t3);font-size:10px;cursor:pointer;flex-shrink:0;transition:all .15s;vertical-align:middle;margin-left:3px;line-height:1;font-family:var(--f-mono)}
 .copy-btn:hover{background:var(--ag);border-color:var(--accent);color:var(--accent)}
 .copy-btn.copied{background:rgba(0,200,150,.15);border-color:var(--green);color:var(--green)}
-
-/* LINK BUTTONS */
+/* CRM status chip */
+.crm-chip{display:inline-block;font-family:var(--f-mono);font-size:8px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.crm-unassigned{background:rgba(136,136,136,.12);border:1px solid rgba(136,136,136,.25);color:var(--t3)}
+.crm-inprogress{background:rgba(92,124,250,.12);border:1px solid rgba(92,124,250,.3);color:var(--accent)}
+.crm-onhold{background:rgba(240,81,110,.1);border:1px solid rgba(240,81,110,.25);color:var(--red)}
 .link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:9px;font-family:var(--f-mono);font-weight:600;border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;line-height:1.4}
 .link-btn-vdp{color:var(--accent);border-color:rgba(92,124,250,.3);background:var(--ag2)}
 .link-btn-vdp:hover{background:var(--ag);border-color:var(--accent)}
 .link-btn-console{color:var(--green);border-color:rgba(0,200,150,.3);background:rgba(0,200,150,.06)}
 .link-btn-console:hover{background:rgba(0,200,150,.12);border-color:var(--green)}
-
-/* DRAWER */
 .drw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;backdrop-filter:blur(4px)}
-.drw{position:fixed;right:0;top:0;bottom:0;width:min(820px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
+.drw{position:fixed;right:0;top:0;bottom:0;width:min(900px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
 .drw.open{transform:translateX(0)}
 .drw-hdr{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--rim);flex-shrink:0}
 .drw-back{width:30px;height:30px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--t2);display:grid;place-items:center;font-size:14px;flex-shrink:0;transition:all .14s}
@@ -184,8 +165,6 @@ td:last-child{padding-right:16px;text-align:right}
 .thumb-img{width:52px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--rim);flex-shrink:0}
 .vin-cell{display:flex;align-items:center;gap:8px}
 .no-data{text-align:center;padding:40px;font-family:var(--f-mono);font-size:10px;color:var(--t3);letter-spacing:.5px}
-
-/* UPLOAD FALLBACK */
 #uf{display:none;background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:28px 32px;margin-bottom:28px}
 .uf-title{font-size:15px;font-weight:700;margin-bottom:6px}
 .uf-msg{font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.6}
@@ -193,15 +172,12 @@ td:last-child{padding-right:16px;text-align:right}
 .uf-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600}
 .uf-btn-p{background:var(--accent);color:#fff}
 .uf-btn-s{background:var(--card2);border:1px solid var(--rim);color:var(--t2)}
-
-/* AUTO-REFRESH RING */
 .refresh-ring{position:relative;width:34px;height:34px;flex-shrink:0}
 .refresh-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
 .refresh-ring circle{fill:none;stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
 .refresh-ring-bg{stroke:var(--rim)}
 .refresh-ring-fill{stroke:var(--green)}
 .refresh-ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;font-family:'JetBrains Mono',monospace;color:var(--t3);font-weight:700;letter-spacing:-.5px}
-
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 #dash>*{animation:fadeUp .3s ease both}
 #dash>*:nth-child(1){animation-delay:.05s}
@@ -209,18 +185,14 @@ td:last-child{padding-right:16px;text-align:right}
 #dash>*:nth-child(3){animation-delay:.15s}
 #dash>*:nth-child(4){animation-delay:.2s}
 #dash>*:nth-child(5){animation-delay:.25s}
-
 .skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:8px}
 @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
 @media(max-width:900px){.chart-pair{grid-template-columns:1fr}.hour-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.page{padding:0 12px 80px}.hdr{grid-template-columns:1fr auto}.hdr-center{display:none}.metric-strip{grid-template-columns:repeat(2,1fr)}.filter-row{grid-template-columns:repeat(2,1fr)}.hcard-n{font-size:28px}}
 </style>
 </head>
 <body>
 <div class="page">
-
-<!-- HEADER -->
 <header class="hdr">
   <div class="hdr-brand">
     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Crect width='120' height='40' rx='8' fill='%235c7cfa'/%3E%3Ctext x='60' y='26' text-anchor='middle' fill='white' font-family='Inter,sans-serif' font-weight='800' font-size='14'%3ESPYNE%3C/text%3E%3C/svg%3E" alt="Spyne" class="hdr-logo" style="height:36px"/>
@@ -249,7 +221,6 @@ td:last-child{padding-right:16px;text-align:right}
   </div>
 </header>
 
-<!-- UPLOAD FALLBACK -->
 <div id="uf">
   <div class="uf-title">📂 Connect to Data</div>
   <div class="uf-msg" id="uf-msg">Live fetch failed. Download the CSV from Metabase and upload it below.</div>
@@ -262,8 +233,6 @@ td:last-child{padding-right:16px;text-align:right}
 <div id="loading"><div class="load-ring"></div><div class="load-label">FETCHING QC PENDING DATA</div></div>
 
 <div id="dash" style="display:none">
-
-  <!-- OVERVIEW -->
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-label"><span class="sec-title">Overview</span><span class="tag tag-blue">QC PENDING</span></div>
@@ -281,27 +250,18 @@ td:last-child{padding-right:16px;text-align:right}
     </div>
   </div>
 
-  <!-- HOURLY BREAKDOWN -->
   <div class="sec">
-    <div class="sec-hd">
-      <div class="sec-label"><span class="sec-title">Hourly Breakdown</span><span class="tag tag-blue" id="hr-tag">RECEIVED AT</span></div>
-    </div>
+    <div class="sec-hd"><div class="sec-label"><span class="sec-title">Hourly Breakdown</span><span class="tag tag-blue" id="hr-tag">RECEIVED AT</span></div></div>
     <div class="hour-grid" id="hcards"></div>
   </div>
 
-  <!-- TYPE FILTER -->
   <div class="sec">
-    <div class="sec-hd">
-      <div class="sec-label"><span class="sec-title">Filter by Type</span><span class="tag tag-blue" id="type-tag">ALL TYPES</span></div>
-    </div>
+    <div class="sec-hd"><div class="sec-label"><span class="sec-title">Filter by Type</span><span class="tag tag-blue" id="type-tag">ALL TYPES</span></div></div>
     <div class="filter-row" id="type-fcards"></div>
   </div>
 
-  <!-- DISTRIBUTION CHARTS -->
   <div class="sec">
-    <div class="sec-hd">
-      <div class="sec-label"><span class="sec-title">Distribution</span><span class="tag tag-blue" id="dist-tag">ACTIVE FILTER</span></div>
-    </div>
+    <div class="sec-hd"><div class="sec-label"><span class="sec-title">Distribution</span><span class="tag tag-blue" id="dist-tag">ACTIVE FILTER</span></div></div>
     <div class="chart-pair">
       <div class="chart-panel">
         <div class="chart-panel-title">By Customer Segment <span id="ch-tt-clear" onclick="_activeCustomerSegment=null;rerender()" style="display:none;font-size:9px;font-family:var(--f-mono);color:var(--accent);cursor:pointer;margin-left:8px">✕ clear</span></div>
@@ -316,57 +276,45 @@ td:last-child{padding-right:16px;text-align:right}
     </div>
   </div>
 
-  <!-- ENTERPRISE BREAKDOWN -->
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-label"><span class="sec-title">Enterprise Breakdown</span><span class="tag tag-blue" id="ent-tag">ALL</span></div>
       <div class="dl-strip" id="dl-ent"></div>
     </div>
-    <div class="tbl-shell">
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr>
-            <th style="min-width:200px"># Enterprise</th>
-            <th style="min-width:120px">Enterprise ID</th>
-            <th style="min-width:80px">Stage</th>
-            <th style="min-width:140px">Customer Segment</th>
-            <th style="min-width:160px">POC Email</th>
-            <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
-            <th>Total</th>
-          </tr></thead>
-          <tbody id="ent-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+    <div class="tbl-shell"><div class="tbl-scroll"><table>
+      <thead><tr>
+        <th style="min-width:200px"># Enterprise</th>
+        <th style="min-width:120px">Enterprise ID</th>
+        <th style="min-width:80px">Stage</th>
+        <th style="min-width:140px">Customer Segment</th>
+        <th style="min-width:160px">POC Email</th>
+        <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
+        <th>Total</th>
+      </tr></thead>
+      <tbody id="ent-tbody"></tbody>
+    </table></div></div>
   </div>
 
-  <!-- TEAM BREAKDOWN -->
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-label"><span class="sec-title">Team Breakdown</span><span class="tag tag-blue" id="team-tag">ALL TEAMS</span></div>
       <div class="dl-strip" id="dl-team"></div>
     </div>
-    <div class="tbl-shell">
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr>
-            <th style="min-width:200px"># Team</th>
-            <th style="min-width:120px">Team ID</th>
-            <th style="min-width:140px">Customer Segment</th>
-            <th style="min-width:160px">POC Email</th>
-            <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
-            <th>Total</th>
-          </tr></thead>
-          <tbody id="team-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+    <div class="tbl-shell"><div class="tbl-scroll"><table>
+      <thead><tr>
+        <th style="min-width:200px"># Team</th>
+        <th style="min-width:120px">Team ID</th>
+        <th style="min-width:140px">Customer Segment</th>
+        <th style="min-width:160px">POC Email</th>
+        <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
+        <th>Total</th>
+      </tr></thead>
+      <tbody id="team-tbody"></tbody>
+    </table></div></div>
   </div>
+</div>
+</div>
 
-</div><!-- /dash -->
-</div><!-- /page -->
-
-<!-- DRAWER -->
 <div class="drw-overlay" id="ov" onclick="closeDrawer()"></div>
 <div class="drw" id="drw">
   <div class="drw-hdr">
@@ -381,7 +329,6 @@ td:last-child{padding-right:16px;text-align:right}
 </div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────
 const API = '/api/data';
 const BKTS = [
   {l:'0–2h',  k:'b0',  min:0,  max:2,  c:'#5c7cfa'},
@@ -392,7 +339,6 @@ const BKTS = [
 ];
 const COLORS=['#5c7cfa','#f0516e','#f5a623','#00e5a0','#b48fff','#2dd4cf','#f472b6','#fb923c','#34d399','#60a5fa','#e879f9','#fbbf24'];
 
-// ── STATE ─────────────────────────────────────────────────────────
 let _rows=[], _ents=[], _entMap={}, _activeType=null, _activeBkt=null,
     _activeCustomerSegment=null, _activeStage=null, _activeHoldReason=null,
     _activeStatus=null, _drawerRows=[], _tblData={}, _sortState={};
@@ -401,12 +347,12 @@ function mkB(){ const o={total:0}; BKTS.forEach(b=>o[b.k]=0); return o; }
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
 
 function f(){
-  const sf = _activeStatus||'QC Pending';
-  let rows = _rows.filter(r=>(r.rb||'').trim()===sf);
-  if(_activeType)  rows=rows.filter(r=>(r.type||'').trim()===_activeType);
-  if(_activeBkt){  const b=BKTS.find(b=>b.k===_activeBkt); if(b) rows=rows.filter(r=>{const h=r.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);}); }
+  const sf=_activeStatus||'QC Pending';
+  let rows=_rows.filter(r=>(r.rb||'').trim()===sf);
+  if(_activeType) rows=rows.filter(r=>(r.type||'').trim()===_activeType);
+  if(_activeBkt){const b=BKTS.find(b=>b.k===_activeBkt);if(b)rows=rows.filter(r=>{const h=r.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);});}
   if(_activeCustomerSegment) rows=rows.filter(r=>(r.customerSegment||'').trim()===_activeCustomerSegment);
-  if(_activeStage)    rows=rows.filter(r=>{const ent=_entMap[r.eid]||{};return(ent.stage||'').trim()===_activeStage;});
+  if(_activeStage) rows=rows.filter(r=>{const ent=_entMap[r.eid]||{};return(ent.stage||'').trim()===_activeStage;});
   if(_activeHoldReason) rows=rows.filter(r=>(r.holdReason||'').trim()===_activeHoldReason);
   return rows;
 }
@@ -420,16 +366,14 @@ function lbl(){
   return parts.join(' · ');
 }
 
-// ── COPY TO CLIPBOARD ────────────────────────────────────────────
 function copyVal(text,btn){
   navigator.clipboard.writeText(text).then(()=>{
-    btn.classList.add('copied'); btn.textContent='✓';
+    btn.classList.add('copied');btn.textContent='✓';
     setTimeout(()=>{btn.classList.remove('copied');btn.textContent='⎘';},1500);
   }).catch(()=>{
-    const ta=document.createElement('textarea'); ta.value=text;
-    ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-    btn.classList.add('copied'); btn.textContent='✓';
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    btn.classList.add('copied');btn.textContent='✓';
     setTimeout(()=>{btn.classList.remove('copied');btn.textContent='⎘';},1500);
   });
 }
@@ -438,25 +382,30 @@ function cbBtn(val,title='Copy'){
   return val?`<button class="copy-btn" title="${title}" onclick="event.stopPropagation();copyVal('${safe}',this)">⎘</button>`:'';
 }
 
-// ── METRICS ───────────────────────────────────────────────────────
+// CRM status chip helper
+function crmChip(v){
+  if(!v)return'<span style="color:var(--t3)">—</span>';
+  const cls=v.includes('unassigned')?'crm-unassigned':v.includes('inprogress')||v.includes('in_progress')?'crm-inprogress':v.includes('onhold')||v.includes('on_hold')?'crm-onhold':'crm-unassigned';
+  return`<span class="crm-chip ${cls}">${v}</span>`;
+}
+
 function renderMetrics(rows){
-  const total=rows.length, ents=[...new Set(rows.map(r=>r.eid).filter(Boolean))].length,
+  const total=rows.length,ents=[...new Set(rows.map(r=>r.eid).filter(Boolean))].length,
         teams=[...new Set(rows.map(r=>r.teamId).filter(Boolean))].length,
         withImg=rows.filter(r=>r.imgCount>0).length,
         avg24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
   const items=[
-    {icon:'🔢',val:total,  label:'Total VINs',  sub:lbl()||'QC Pending',c:'var(--accent)'},
-    {icon:'🏢',val:ents,   label:'Enterprises', sub:'Unique',c:'var(--purple)'},
-    {icon:'👥',val:teams,  label:'Teams',       sub:'Assigned',c:'var(--teal)'},
-    {icon:'📸',val:withImg,label:'Has Images',  sub:`${total?Math.round(withImg/total*100):0}%`,c:'var(--green)'},
-    {icon:'⏰',val:avg24,  label:'Over 24h',    sub:'Waiting',c:'var(--red)'},
+    {icon:'🔢',val:total,  label:'Total VINs', sub:lbl()||'QC Pending'},
+    {icon:'🏢',val:ents,   label:'Enterprises',sub:'Unique'},
+    {icon:'👥',val:teams,  label:'Teams',      sub:'Assigned'},
+    {icon:'📸',val:withImg,label:'Has Images', sub:`${total?Math.round(withImg/total*100):0}%`},
+    {icon:'⏰',val:avg24,  label:'Over 24h',   sub:'Waiting'},
   ];
   document.getElementById('metrics').innerHTML=items.map(i=>
     `<div class="metric"><div class="metric-icon">${i.icon}</div>
      <div class="metric-val">${i.val.toLocaleString()}</div>
      <div class="metric-label">${i.label}</div>
      <div class="metric-sub">${i.sub}</div></div>`).join('');
-
   const holdCount=_rows.filter(r=>(r.rb||'').trim()==='QC Hold').length;
   document.getElementById('hold-card-val').textContent=holdCount.toLocaleString();
   const isHold=_activeStatus==='QC Hold';
@@ -467,17 +416,15 @@ function renderMetrics(rows){
   updateResetBtn();
 }
 
-// ── HOURLY CARDS ─────────────────────────────────────────────────
 function renderHours(rows){
-  const obj=mkB(); rows.forEach(r=>addB(obj,r.hrsRecv));
-  const mx=obj.total||1; const el=document.getElementById('hcards'); el.innerHTML='';
+  const obj=mkB();rows.forEach(r=>addB(obj,r.hrsRecv));
+  const mx=obj.total||1;const el=document.getElementById('hcards');el.innerHTML='';
   BKTS.forEach(b=>{
-    const n=obj[b.k]||0, p=Math.round(n/mx*100), isActive=_activeBkt===b.k;
+    const n=obj[b.k]||0,p=Math.round(n/mx*100),isActive=_activeBkt===b.k;
     const d=document.createElement('div');
     d.className='hcard'+(isActive?' active':'');
     d.style.setProperty('--hc',b.c);
-    d.innerHTML=`<div class="hcard-bg"></div>
-      <div class="hcard-range">${b.l}</div>
+    d.innerHTML=`<div class="hcard-bg"></div><div class="hcard-range">${b.l}</div>
       <div class="hcard-n">${n.toLocaleString()}</div>
       <div class="hcard-pct">${p}% of total</div>
       <div class="hcard-bar"><div class="hcard-bar-fill" style="background:${b.c}"></div></div>`;
@@ -489,14 +436,13 @@ function renderHours(rows){
   document.getElementById('hr-tag').textContent='RECEIVED AT'+(bl?' · '+bl:'');
 }
 
-// ── TYPE FILTER CARDS ────────────────────────────────────────────
 function renderTypeCards(){
   const sf=_activeStatus||'QC Pending';
   const base=_rows.filter(r=>(r.rb||'').trim()===sf);
-  const map={}; base.forEach(r=>{const t=(r.type||'').trim();if(t)map[t]=(map[t]||0)+1;});
+  const map={};base.forEach(r=>{const t=(r.type||'').trim();if(t)map[t]=(map[t]||0)+1;});
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
   document.getElementById('type-tag').textContent=`${entries.length} TYPES`;
-  const el=document.getElementById('type-fcards'); el.innerHTML='';
+  const el=document.getElementById('type-fcards');el.innerHTML='';
   const ac=document.createElement('div');
   ac.className='fcard'+(_activeType===null?' active':'');
   ac.style.setProperty('--fc','var(--accent)');
@@ -507,7 +453,7 @@ function renderTypeCards(){
     const col=COLORS[i%COLORS.length];
     const d=document.createElement('div');
     d.className='fcard'+(_activeType===name?' active':'');
-    d.dataset.t=name; d.style.setProperty('--fc',col);
+    d.dataset.t=name;d.style.setProperty('--fc',col);
     d.innerHTML=`<div class="fc-name" title="${name}">${name}</div>
       <div class="fc-val">${count.toLocaleString()}</div>
       <div class="fc-sub">${Math.round(count/base.length*100)}%</div>`;
@@ -521,14 +467,13 @@ function syncTypeActive(){
   });
 }
 
-// ── CHARTS ────────────────────────────────────────────────────────
 function drawBars(id,subId,entries,sub,onClickFn){
   document.getElementById(subId).textContent=sub;
   const el=document.getElementById(id);
   if(!entries.length){el.innerHTML='<div style="font-size:10px;color:var(--t3);font-family:var(--f-mono)">No data</div>';return;}
-  const mx=entries[0][1]||1, tot=entries.reduce((s,[,n])=>s+n,0);
+  const mx=entries[0][1]||1,tot=entries.reduce((s,[,n])=>s+n,0);
   el.innerHTML=entries.slice(0,10).map(([name,n],i)=>{
-    const pw=Math.round(n/mx*100), pt=Math.round(n/tot*100), col=COLORS[i%COLORS.length];
+    const pw=Math.round(n/mx*100),pt=Math.round(n/tot*100),col=COLORS[i%COLORS.length];
     const ac=onClickFn?.active===name?' bar-item-active':'';
     return`<div class="bar-item${ac}" data-name="${name}" style="${onClickFn?'cursor:pointer':''}">
       <div class="bar-name" title="${name}">${name||'Unknown'}</div>
@@ -549,14 +494,12 @@ function renderCharts(rows){
     if(_activeBkt){const b=BKTS.find(b=>b.k===_activeBkt);if(b)r=r.filter(x=>{const h=x.hrsRecv;if(h==null)return false;return h>=b.min&&(b.max===9e9?true:h<b.max);});}
     return r;
   })();
-  // By Customer Segment
-  const ttMap={}; baseRows.forEach(r=>{const tt=(r.customerSegment||'Unknown').trim();ttMap[tt]=(ttMap[tt]||0)+1;});
+  const ttMap={};baseRows.forEach(r=>{const tt=(r.customerSegment||'Unknown').trim();ttMap[tt]=(ttMap[tt]||0)+1;});
   const ttClick=Object.assign(name=>{_activeCustomerSegment=_activeCustomerSegment===name?null:name;rerender();},{active:_activeCustomerSegment});
   drawBars('ch-tt','ch-tt-sub',Object.entries(ttMap).sort((a,b)=>b[1]-a[1]),`${baseRows.length} VINs · click to filter`,ttClick);
   document.getElementById('ch-tt-clear').style.display=_activeCustomerSegment?'inline':'none';
-
   const holdRows=_rows.filter(r=>(r.rb||'').trim()==='QC Hold');
-  const hrMap={}; holdRows.forEach(r=>{const hr=(r.holdReason||'').trim();if(hr)hrMap[hr]=(hrMap[hr]||0)+1;});
+  const hrMap={};holdRows.forEach(r=>{const hr=(r.holdReason||'').trim();if(hr)hrMap[hr]=(hrMap[hr]||0)+1;});
   const hrEntries=Object.entries(hrMap).sort((a,b)=>b[1]-a[1]);
   const hrClick=Object.assign(name=>{
     _activeHoldReason=_activeHoldReason===name?null:name;
@@ -568,37 +511,30 @@ function renderCharts(rows){
   updateResetBtn();
 }
 
-// ── TABLE RENDER ─────────────────────────────────────────────────
 function sortTableData(data,col,dir){
   return [...data].sort((a,b)=>{
-    let va=a[col]??(typeof a[col]==='number'?0:''), vb=b[col]??(typeof b[col]==='number'?0:'');
-    if(typeof va==='string'||col==='name'||col==='id'||col==='email'){
-      va=String(va); vb=String(vb);
-      return dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
-    }
+    let va=a[col]??(typeof a[col]==='number'?0:''),vb=b[col]??(typeof b[col]==='number'?0:'');
+    if(typeof va==='string'||col==='name'||col==='id'||col==='email'){va=String(va);vb=String(vb);return dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);}
     return dir==='asc'?va-vb:vb-va;
   });
 }
 
-// Enterprise table render
 function renderEntTbl(data){
   const tbodyId='ent-tbody';
-  const tbody=document.getElementById(tbodyId); tbody.innerHTML='';
+  const tbody=document.getElementById(tbodyId);tbody.innerHTML='';
   if(!data.length){tbody.innerHTML='<tr><td colspan="11" class="no-data">NO DATA</td></tr>';return;}
   const ss=_sortState[tbodyId]||{col:'total',dir:'desc'};
   const sorted=sortTableData(data,ss.col,ss.dir);
-
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
     const colKeys=['name','id','stage','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
-      const ck=colKeys[i]; if(!ck)return;
-      if(ck===ss.col) th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
+      const ck=colKeys[i];if(!ck)return;
+      if(ck===ss.col)th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
       th.onclick=()=>{const cur=_sortState[tbodyId]||{col:'total',dir:'desc'};_sortState[tbodyId]={col:ck,dir:cur.col===ck&&cur.dir==='desc'?'asc':'desc'};renderEntTbl(data);};
     });
   }
-
   sorted.forEach((row,i)=>{
     const rnkClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const ent=_entMap[row.eid]||{};
@@ -608,26 +544,20 @@ function renderEntTbl(data){
     const pocEmail=ent.email||row._rows[0]?.entEmail||'';
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td>
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
-          <span class="rnk ${rnkClass}">${i+1}</span>
-          <span style="font-weight:600">${row.name||'—'}</span>
-          ${cbBtn(row.name,'Copy enterprise name')}
-        </div>
-      </td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span class="id-chip" title="${row.eid||''}">${row.eid||'—'}</span>
-          ${cbBtn(row.eid,'Copy enterprise ID')}
-        </div>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
+        <span class="rnk ${rnkClass}">${i+1}</span>
+        <span style="font-weight:600">${row.name||'—'}</span>
+        ${cbBtn(row.name,'Copy enterprise name')}
+      </div></td>
+      <td><div style="display:flex;align-items:center;gap:4px">
+        <span class="id-chip" title="${row.eid||''}">${row.eid||'—'}</span>
+        ${cbBtn(row.eid,'Copy enterprise ID')}
+      </div></td>
       <td>${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
       <td><span style="font-size:10px;color:var(--t2)">${customerSegments.join(', ')||'—'}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px">
-          ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
-        </div>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:4px">
+        ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
+      </div></td>
       ${BKTS.map(b=>{const n=row[b.k]||0,p=row.total>0?n/row.total*100:0;
         return`<td><div class="mini-progress"><span style="font-family:var(--f-mono);font-size:10px;min-width:20px">${n}</span>
           <div class="mp-track"><div class="mp-fill" style="width:${p}%;background:${b.c}"></div></div></div></td>`;
@@ -636,59 +566,48 @@ function renderEntTbl(data){
     tr.onclick=e=>{e.stopPropagation();if(row._rows?.length)openDrawer(row.name,row._rows,row);};
     tbody.appendChild(tr);
   });
-
-  // Footer totals
-  const tot=mkB(); data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
-  const tf=document.createElement('tr'); tf.className='tbl-foot'; tf.style.cursor='default';
+  const tot=mkB();data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
+  const tf=document.createElement('tr');tf.className='tbl-foot';tf.style.cursor='default';
   tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td><td>—</td>
     ${BKTS.map(b=>`<td style="font-family:var(--f-mono);font-size:10px">${(tot[b.k]||0).toLocaleString()}</td>`).join('')}
     <td><span class="pill-chip">${tot.total.toLocaleString()}</span></td>`;
   tbody.appendChild(tf);
 }
 
-// Team table render
 function renderTeamTbl(data){
   const tbodyId='team-tbody';
-  const tbody=document.getElementById(tbodyId); tbody.innerHTML='';
+  const tbody=document.getElementById(tbodyId);tbody.innerHTML='';
   if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">NO DATA</td></tr>';return;}
   const ss=_sortState[tbodyId]||{col:'total',dir:'desc'};
   const sorted=sortTableData(data,ss.col,ss.dir);
-
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
     const colKeys=['name','id','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
-      const ck=colKeys[i]; if(!ck)return;
-      if(ck===ss.col) th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
+      const ck=colKeys[i];if(!ck)return;
+      if(ck===ss.col)th.classList.add(ss.dir==='asc'?'sort-asc':'sort-desc');
       th.onclick=()=>{const cur=_sortState[tbodyId]||{col:'total',dir:'desc'};_sortState[tbodyId]={col:ck,dir:cur.col===ck&&cur.dir==='desc'?'asc':'desc'};renderTeamTbl(data);};
     });
   }
-
   sorted.forEach((row,i)=>{
     const rnkClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const pocEmail=row._rows?.[0]?.entEmail||'';
     const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td>
-        <div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
-          <span class="rnk ${rnkClass}">${i+1}</span>
-          <span style="font-weight:600">${row.name||'—'}</span>
-          ${cbBtn(row.name,'Copy team name')}
-        </div>
-      </td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px">
-          <span class="id-chip" title="${row.teamId||''}">${row.teamId||'—'}</span>
-          ${cbBtn(row.teamId,'Copy team ID')}
-        </div>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
+        <span class="rnk ${rnkClass}">${i+1}</span>
+        <span style="font-weight:600">${row.name||'—'}</span>
+        ${cbBtn(row.name,'Copy team name')}
+      </div></td>
+      <td><div style="display:flex;align-items:center;gap:4px">
+        <span class="id-chip" title="${row.teamId||''}">${row.teamId||'—'}</span>
+        ${cbBtn(row.teamId,'Copy team ID')}
+      </div></td>
       <td><span style="font-size:10px;color:var(--t2)">${row.customerSegment||'—'}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:4px">
-          ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
-        </div>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:4px">
+        ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
+      </div></td>
       ${BKTS.map(b=>{const n=row[b.k]||0,p=row.total>0?n/row.total*100:0;
         return`<td><div class="mini-progress"><span style="font-family:var(--f-mono);font-size:10px;min-width:20px">${n}</span>
           <div class="mp-track"><div class="mp-fill" style="width:${p}%;background:${b.c}"></div></div></div></td>`;
@@ -697,16 +616,15 @@ function renderTeamTbl(data){
     tr.onclick=e=>{e.stopPropagation();if(row._rows?.length)openDrawer(row.name,row._rows,row);};
     tbody.appendChild(tr);
   });
-
-  const tot=mkB(); data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
-  const tf=document.createElement('tr'); tf.className='tbl-foot'; tf.style.cursor='default';
+  const tot=mkB();data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
+  const tf=document.createElement('tr');tf.className='tbl-foot';tf.style.cursor='default';
   tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td>
     ${BKTS.map(b=>`<td style="font-family:var(--f-mono);font-size:10px">${(tot[b.k]||0).toLocaleString()}</td>`).join('')}
     <td><span class="pill-chip">${tot.total.toLocaleString()}</span></td>`;
   tbody.appendChild(tf);
 }
 
-// ── DRAWER ────────────────────────────────────────────────────────
+// ── DRAWER ──────────────────────────────────────────────────────
 function openDrawer(title,rows,rowData){
   _drawerRows=rows;
   document.getElementById('drw-title').textContent=title;
@@ -724,10 +642,9 @@ function openDrawer(title,rows,rowData){
         <button class="dl-item" onclick="dlDrawer('xlsx');closeDl('drw-dl-dd')"><span class="dl-item-icon">📊</span>XLSX</button>
       </div>
     </div>`;
-  const withImg=rows.filter(r=>r.imgCount>0).length, over24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
+  const withImg=rows.filter(r=>r.imgCount>0).length,over24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
   const avgHrs=rows.filter(r=>r.hrsRecv!=null).reduce((s,r)=>s+r.hrsRecv,0)/(rows.filter(r=>r.hrsRecv!=null).length||1);
-  const body=document.getElementById('drw-body');
-  body.innerHTML=`
+  document.getElementById('drw-body').innerHTML=`
     <div class="drw-stats">
       <div class="ds"><div class="ds-val">${rows.length}</div><div class="ds-label">VINs</div></div>
       <div class="ds"><div class="ds-val">${withImg}</div><div class="ds-label">Has Images</div></div>
@@ -744,6 +661,7 @@ function openDrawer(title,rows,rowData){
             <th onclick="sortDrawer('type')">Type</th>
             <th onclick="sortDrawer('make')">Make/Model</th>
             <th onclick="sortDrawer('rb')">RB</th>
+            <th onclick="sortDrawer('crmStatus')">CRM Status</th>
             <th>Hold</th>
             <th onclick="sortDrawer('hrsRecv')">Recv Hrs</th>
             <th onclick="sortDrawer('imgCount')">Imgs</th>
@@ -763,7 +681,7 @@ function closeDrawer(){
 }
 let _drawerSortCol='hrsRecv',_drawerSortDir='desc';
 function sortDrawer(col){
-  if(_drawerSortCol===col) _drawerSortDir=_drawerSortDir==='asc'?'desc':'asc';
+  if(_drawerSortCol===col)_drawerSortDir=_drawerSortDir==='asc'?'desc':'asc';
   else{_drawerSortCol=col;_drawerSortDir='desc';}
   renderDrawerRows();
 }
@@ -777,71 +695,62 @@ function renderDrawerRows(){
   document.querySelectorAll('.drw-tbl-wrap thead th').forEach(th=>{
     th.classList.remove('sort-asc','sort-desc');
     const col=th.getAttribute('onclick')?.match(/sortDrawer\('(.+)'\)/)?.[1];
-    if(col===_drawerSortCol) th.classList.add(_drawerSortDir==='asc'?'sort-asc':'sort-desc');
+    if(col===_drawerSortCol)th.classList.add(_drawerSortDir==='asc'?'sort-asc':'sort-desc');
   });
-  const tbody=document.querySelector('.drw-tbl-wrap tbody'); if(!tbody)return;
+  const tbody=document.querySelector('.drw-tbl-wrap tbody');if(!tbody)return;
   tbody.innerHTML=rows.map(r=>{
     const ent=_entMap[r.eid]||{};
     const stage=ent.stage||r.entStage||'';
     const stageCls=stage.toLowerCase().includes('live')?'stage-live':stage.toLowerCase().includes('onboard')?'stage-onboard':'';
-    const vinVal=r.vin||'', entVal=r.entName||r.eid||'', teamVal=r.teamName||'';
+    const vinVal=r.vin||'',entVal=r.entName||r.eid||'',teamVal=r.teamName||'';
     const consoleUrl=(r.dealerVinId&&r.eid&&r.teamId)?`https://console.spyne.ai/inventory/v2/listings/${r.dealerVinId}?enterprise_id=${r.eid}&team_id=${r.teamId}`:'';
     return`<tr>
       <td><div class="vin-cell">
-        ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:'' }
+        ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">:''}
         <span style="font-family:var(--f-mono);font-size:9px">${vinVal||'—'}</span>
         ${cbBtn(vinVal,'Copy VIN')}
       </div></td>
-      <td style="font-size:11px">
-        <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
-          <span>${entVal||'—'}</span>
-          ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}
-          ${cbBtn(entVal,'Copy enterprise')}
-        </div>
-      </td>
-      <td style="font-size:10px">
-        <div style="display:flex;align-items:center;gap:3px">
-          <span>${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team')}
-        </div>
-      </td>
+      <td style="font-size:11px"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+        <span>${entVal||'—'}</span>
+        ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}
+        ${cbBtn(entVal,'Copy enterprise')}
+      </div></td>
+      <td style="font-size:10px"><div style="display:flex;align-items:center;gap:3px">
+        <span>${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team')}
+      </div></td>
       <td>${r.type||'—'}</td>
       <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
       <td style="font-size:10px">${r.rb||'—'}</td>
+      <td>${crmChip(r.crmStatus)}</td>
       <td style="font-size:9px;color:var(--amber)">${r.holdReason||'—'}</td>
       <td style="font-family:var(--f-mono)">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
       <td style="font-family:var(--f-mono)">${r.imgCount||0}</td>
-      <td style="text-align:center">
-        <div style="display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:nowrap">
-          ${r.vdpUrl?`<a class="link-btn link-btn-vdp" href="${r.vdpUrl}" target="_blank" onclick="event.stopPropagation()" title="Open VDP">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            VDP</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
-          ${consoleUrl?`<a class="link-btn link-btn-console" href="${consoleUrl}" target="_blank" onclick="event.stopPropagation()" title="Open in Spyne Console">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            Console</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
-        </div>
-      </td>
+      <td style="text-align:center"><div style="display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:nowrap">
+        ${r.vdpUrl?`<a class="link-btn link-btn-vdp" href="${r.vdpUrl}" target="_blank" onclick="event.stopPropagation()">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>VDP</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
+        ${consoleUrl?`<a class="link-btn link-btn-console" href="${consoleUrl}" target="_blank" onclick="event.stopPropagation()">
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Console</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
+      </div></td>
     </tr>`;
   }).join('');
 }
 
-// ── FILTER HELPERS ────────────────────────────────────────────────
 function toggleHoldFilter(){
   _activeStatus=_activeStatus==='QC Hold'?null:'QC Hold';
   _activeType=null;_activeBkt=null;_activeCustomerSegment=null;_activeStage=null;_activeHoldReason=null;
-  syncTypeActive(); rerender();
+  syncTypeActive();rerender();
 }
 function resetAllFilters(){
   _activeStatus=null;_activeType=null;_activeBkt=null;
   _activeCustomerSegment=null;_activeStage=null;_activeHoldReason=null;
-  syncTypeActive(); rerender();
+  syncTypeActive();rerender();
 }
 function anyFilterActive(){return!!(_activeStatus||_activeType||_activeBkt||_activeCustomerSegment||_activeStage||_activeHoldReason);}
 function updateResetBtn(){const b=document.getElementById('reset-btn');if(b)b.style.display=anyFilterActive()?'inline-flex':'none';}
 
-// ── DOWNLOAD ──────────────────────────────────────────────────────
 function dl(blob,n){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-const DL_KEYS=['vin','entName','teamName','type','customerSegment','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
-const DL_LABELS=['VIN','Enterprise','Team','Type','Customer Segment','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
+const DL_KEYS=['vin','entName','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
+const DL_LABELS=['VIN','Enterprise','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
 function dlDrawer(fmt){
   if(!_drawerRows.length)return;
   if(fmt==='csv'){const c=[DL_LABELS.join(','),..._drawerRows.map(r=>DL_KEYS.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');dl(new Blob([c],{type:'text/csv'}),'qc-vins.csv');}
@@ -853,7 +762,7 @@ function tblCSV(d,extraKeys,extraLabels){
   const allL=['Name',...(extraLabels||[]),...BKTS.map(b=>b.l),'Total'];
   return[allL.join(','),...d.map(r=>allK.map(k=>r[k]??'').join(','))].join('\n');
 }
-function mkDl(id,pre,extraKeys,extraLabels){
+function mkDl(id,pre){
   document.getElementById(id).innerHTML=`
     <div class="dl-dropdown" id="${id}-dd">
       <button class="dl-trigger" onclick="toggleDl('${id}-dd')">
@@ -869,12 +778,12 @@ function mkDl(id,pre,extraKeys,extraLabels){
     </div>`;
 }
 function dlTbl(id,fmt,pre){
-  const d=_tblData[id]; if(!d?.length)return;
+  const d=_tblData[id];if(!d?.length)return;
   const isEnt=id==='dl-ent';
   const extraK=isEnt?['eid','stage','customerSegment','email']:['teamId','customerSegment','email'];
   const extraL=isEnt?['Enterprise ID','Stage','Customer Segment','POC Email']:['Team ID','Customer Segment','POC Email'];
-  if(fmt==='csv') dl(new Blob([tblCSV(d,extraK,extraL)],{type:'text/csv'}),`${pre}.csv`);
-  else if(fmt==='json') dl(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),`${pre}.json`);
+  if(fmt==='csv')dl(new Blob([tblCSV(d,extraK,extraL)],{type:'text/csv'}),`${pre}.csv`);
+  else if(fmt==='json')dl(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),`${pre}.json`);
   else{
     const allK=['name',...extraK,...BKTS.map(b=>b.k),'total'];
     const allL=['Name',...extraL,...BKTS.map(b=>b.l),'Total'];
@@ -883,58 +792,46 @@ function dlTbl(id,fmt,pre){
   }
 }
 
-// ── RERENDER ──────────────────────────────────────────────────────
 function rerender(){
-  const rows=f(), l=lbl();
-  renderMetrics(rows);
-  renderHours(rows);
-  renderCharts(rows);
-  renderTypeCards();
-
-  // Enterprise data
+  const rows=f(),l=lbl();
+  renderMetrics(rows);renderHours(rows);renderCharts(rows);renderTypeCards();
   const eMap={};
   rows.forEach(r=>{
     const e=r.entName||r.eid||'Unknown';
-    if(!eMap[e]) eMap[e]={name:e,eid:r.eid,email:r.entEmail||'',...mkB(),_rows:[]};
-    addB(eMap[e],r.hrsRecv); eMap[e]._rows.push(r);
-    if(!eMap[e].email&&r.entEmail) eMap[e].email=r.entEmail;
+    if(!eMap[e])eMap[e]={name:e,eid:r.eid,email:r.entEmail||'',...mkB(),_rows:[]};
+    addB(eMap[e],r.hrsRecv);eMap[e]._rows.push(r);
+    if(!eMap[e].email&&r.entEmail)eMap[e].email=r.entEmail;
   });
   const eData=Object.values(eMap).sort((a,b)=>b.total-a.total);
-  _tblData['dl-ent']=eData; mkDl('dl-ent',`enterprises-${(l||'all').toLowerCase()}`);
+  _tblData['dl-ent']=eData;mkDl('dl-ent',`enterprises-${(l||'all').toLowerCase()}`);
   document.getElementById('ent-tag').textContent=`${eData.length} ENTERPRISES · ${rows.length} VINs`;
   renderEntTbl(eData);
-
-  // Team data
   const tMap={};
   rows.forEach(r=>{
     const t=r.teamName||r.teamId||'Unknown';
-    if(!tMap[t]) tMap[t]={name:t,teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
-    addB(tMap[t],r.hrsRecv); tMap[t]._rows.push(r);
-    if(!tMap[t].email&&r.entEmail) tMap[t].email=r.entEmail;
+    if(!tMap[t])tMap[t]={name:t,teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
+    addB(tMap[t],r.hrsRecv);tMap[t]._rows.push(r);
+    if(!tMap[t].email&&r.entEmail)tMap[t].email=r.entEmail;
   });
   const tData=Object.values(tMap).sort((a,b)=>b.total-a.total);
-  _tblData['dl-team']=tData; mkDl('dl-team',`teams-${(l||'all').toLowerCase()}`);
+  _tblData['dl-team']=tData;mkDl('dl-team',`teams-${(l||'all').toLowerCase()}`);
   document.getElementById('team-tag').textContent=`${tData.length} TEAMS · ${rows.length} VINs`;
   renderTeamTbl(tData);
-
   document.getElementById('st-text').textContent=`${rows.length.toLocaleString()} ${l}`;
   updateResetBtn();
 }
 
-// ── PROCESS DATA ──────────────────────────────────────────────────
 function processData(rows,ents){
-  _rows=rows; _ents=ents||[];
-  _entMap={};
-  _ents.forEach(e=>{if(e.id) _entMap[e.id]=e;});
+  _rows=rows;_ents=ents||[];_entMap={};
+  _ents.forEach(e=>{if(e.id)_entMap[e.id]=e;});
   rows.forEach(r=>{
-    if(r.eid&&!_entMap[r.eid]) _entMap[r.eid]={name:r.entName,type:r.entType,stage:r.entStage,email:r.entEmail||''};
-    else if(r.eid&&_entMap[r.eid]&&!_entMap[r.eid].email&&r.entEmail) _entMap[r.eid].email=r.entEmail;
+    if(r.eid&&!_entMap[r.eid])_entMap[r.eid]={name:r.entName,type:r.entType,stage:r.entStage,email:r.entEmail||''};
+    else if(r.eid&&_entMap[r.eid]&&!_entMap[r.eid].email&&r.entEmail)_entMap[r.eid].email=r.entEmail;
   });
-  _activeType=null; _activeStatus=null;
-  renderTypeCards(); rerender();
+  _activeType=null;_activeStatus=null;
+  renderTypeCards();rerender();
 }
 
-// ── THEME ─────────────────────────────────────────────────────────
 function toggleTheme(){
   const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',n);
@@ -943,16 +840,15 @@ function toggleTheme(){
 }
 (()=>{const s=localStorage.getItem('qc-theme');if(s){document.documentElement.setAttribute('data-theme',s);document.getElementById('tbtn').textContent=s==='dark'?'🌙':'☀️';}})();
 
-// ── AUTO-REFRESH ──────────────────────────────────────────────────
-const AUTO_MS=15*60*1000; let _refreshStart=Date.now(), _refreshTimer=null;
+const AUTO_MS=15*60*1000;let _refreshStart=Date.now(),_refreshTimer=null;
 const RING_CIRC=87.96;
 function startAutoRefresh(){
-  clearInterval(_refreshTimer); _refreshStart=Date.now(); updateRing();
+  clearInterval(_refreshTimer);_refreshStart=Date.now();updateRing();
   _refreshTimer=setInterval(()=>{updateRing();if(Date.now()-_refreshStart>=AUTO_MS)loadData();},1000);
 }
 function updateRing(){
-  const elapsed=Date.now()-_refreshStart, progress=Math.min(elapsed/AUTO_MS,1), remaining=Math.max(AUTO_MS-elapsed,0);
-  const ring=document.getElementById('ring-fill'), label=document.getElementById('ring-label');
+  const elapsed=Date.now()-_refreshStart,progress=Math.min(elapsed/AUTO_MS,1),remaining=Math.max(AUTO_MS-elapsed,0);
+  const ring=document.getElementById('ring-fill'),label=document.getElementById('ring-label');
   if(!ring||!label)return;
   ring.style.strokeDashoffset=(RING_CIRC*progress).toFixed(2);
   const ts=Math.ceil(remaining/1000);
@@ -962,50 +858,31 @@ function updateRing(){
 function manualRefresh(){clearInterval(_refreshTimer);loadData();}
 function showSkeleton(){
   const el=document.getElementById('metrics');
-  if(el) el.innerHTML=Array(5).fill('<div class="metric skel" style="height:100px"></div>').join('');
+  if(el)el.innerHTML=Array(5).fill('<div class="metric skel" style="height:100px"></div>').join('');
 }
 
-// ── UPLOAD FALLBACK ───────────────────────────────────────────────
-// ── PROPER RFC-4180 CSV PARSER ────────────────────────────────────
 function parseCSVLine(line){
-  const fields=[]; let cur='', inQ=false, i=0;
+  const fields=[];let cur='',inQ=false,i=0;
   while(i<line.length){
     const c=line[i];
-    if(inQ){
-      if(c==='"'&&line[i+1]==='"'){cur+='"';i+=2;}
-      else if(c==='"'){inQ=false;i++;}
-      else{cur+=c;i++;}
-    } else {
-      if(c==='"'){inQ=true;i++;}
-      else if(c===','){fields.push(cur.trim());cur='';i++;}
-      else{cur+=c;i++;}
-    }
+    if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i+=2;}else if(c==='"'){inQ=false;i++;}else{cur+=c;i++;}}
+    else{if(c==='"'){inQ=true;i++;}else if(c===','){fields.push(cur.trim());cur='';i++;}else{cur+=c;i++;}}
   }
-  fields.push(cur.trim());
-  return fields;
+  fields.push(cur.trim());return fields;
 }
 function parseCSV(text){
-  // Handle \r\n and \n; respect quoted newlines
-  const rows=[]; let cur='', inQ=false;
+  const rows=[];let cur='',inQ=false;
   for(let i=0;i<text.length;i++){
     const c=text[i];
-    if(inQ){
-      if(c==='"'&&text[i+1]==='"'){cur+='"';i++;}
-      else if(c==='"') inQ=false;
-      else cur+=c;
-    } else {
-      if(c==='"') inQ=true;
-      else if(c==='\r'&&text[i+1]==='\n'){rows.push(cur);cur='';i++;}
-      else if(c==='\n'){rows.push(cur);cur='';}
-      else cur+=c;
-    }
+    if(inQ){if(c==='"'&&text[i+1]==='"'){cur+='"';i++;}else if(c==='"')inQ=false;else cur+=c;}
+    else{if(c==='"')inQ=true;else if(c==='\r'&&text[i+1]==='\n'){rows.push(cur);cur='';i++;}else if(c==='\n'){rows.push(cur);cur='';}else cur+=c;}
   }
-  if(cur.trim()) rows.push(cur);
+  if(cur.trim())rows.push(cur);
   return rows.map(parseCSVLine);
 }
 
 function handleUpload(evt){
-  const file=evt.target.files[0]; if(!file)return;
+  const file=evt.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=e=>{
     const parsed=parseCSV(e.target.result);
@@ -1015,12 +892,13 @@ function handleUpload(evt){
     const now=Date.now();
     const hoursAgo=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(now-d)/3600000;return h>=0?h:null;};
     const rows=parsed.slice(1).filter(vals=>vals.some(v=>v.trim())).map(vals=>{
-      const r={}; hdrs.forEach((h,i)=>r[h]=vals[i]??'');
+      const r={};hdrs.forEach((h,i)=>r[h]=vals[i]??'');
       return{
         vin:pk(r,'vinName'),dealerVinId:pk(r,'dealerVinId'),eid:pk(r,'enterpriseId'),
         entName:pk(r,'enterprise_name')||pk(r,'enterpriseId'),
         teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),
         customerSegment:pk(r,'customer_segment'),
+        crmStatus:pk(r,'crm_status'),
         make:pk(r,'make'),model:pk(r,'model'),year:pk(r,'year'),
         type:pk(r,'type'),rb:pk(r,'reason_bucket'),holdReason:pk(r,'hold_reason'),
         imgCount:parseInt(pk(r,'image_count'))||0,thumbnail:pk(r,'thumbnail_url'),
@@ -1031,30 +909,24 @@ function handleUpload(evt){
     });
     document.getElementById('uf').style.display='none';
     document.getElementById('loading').style.display='flex';
-    setTimeout(()=>{
-      document.getElementById('loading').style.display='none';
-      document.getElementById('dash').style.display='block';
-      processData(rows,[]);
-    },200);
+    setTimeout(()=>{document.getElementById('loading').style.display='none';document.getElementById('dash').style.display='block';processData(rows,[]);},200);
   };
   reader.readAsText(file);
 }
 
-// ── LOAD ──────────────────────────────────────────────────────────
 async function loadData(){
   const dashEl=document.getElementById('dash');
-  if(dashEl.style.display!=='none') showSkeleton();
-  else { document.getElementById('loading').style.display='flex'; dashEl.style.display='none'; }
+  if(dashEl.style.display!=='none')showSkeleton();
+  else{document.getElementById('loading').style.display='flex';dashEl.style.display='none';}
   document.getElementById('uf').style.display='none';
   document.getElementById('st-text').textContent='Loading…';
   try{
-    const t0=Date.now(), r=await fetch(API);
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const r=await fetch(API);
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const j=await r.json();
-    if(j.error) throw new Error(j.error);
-    if(!j.rows?.length) throw new Error('0 rows');
-    if(j.lastSynced) document.getElementById('sy').textContent='Synced '+new Date(j.lastSynced).toLocaleTimeString();
-    // Normalize server rows: map snake_case/alternate field names to camelCase
+    if(j.error)throw new Error(j.error);
+    if(!j.rows?.length)throw new Error('0 rows');
+    if(j.lastSynced)document.getElementById('sy').textContent='Synced '+new Date(j.lastSynced).toLocaleTimeString();
     const _now=Date.now();
     const _ha=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(_now-d)/3600000;return h>=0?h:null;};
     const normRows=j.rows.map(r=>({
@@ -1065,6 +937,7 @@ async function loadData(){
       teamId:r.teamId||'',
       teamName:r.teamName||r.team_name||'',
       customerSegment:(r.customerSegment||r.customer_segment||'').trim(),
+      crmStatus:(r.crmStatus||r.crm_status||'').trim(),
       make:r.make||'',model:r.model||'',year:r.year||'',
       type:r.type||'',rb:r.rb||r.reason_bucket||'',
       holdReason:r.holdReason||r.hold_reason||'',
@@ -1088,18 +961,15 @@ async function loadData(){
   }
 }
 
-// ── DROPDOWN HELPERS ─────────────────────────────────────────────
 function toggleDl(id){
-  const dd=document.getElementById(id); if(!dd)return;
+  const dd=document.getElementById(id);if(!dd)return;
   const isOpen=dd.classList.contains('open');
   document.querySelectorAll('.dl-dropdown.open').forEach(d=>d.classList.remove('open'));
-  if(!isOpen) dd.classList.add('open');
+  if(!isOpen)dd.classList.add('open');
 }
-function closeDl(id){
-  const dd=document.getElementById(id); if(dd) dd.classList.remove('open');
-}
+function closeDl(id){const dd=document.getElementById(id);if(dd)dd.classList.remove('open');}
 document.addEventListener('click',e=>{
-  if(!e.target.closest('.dl-dropdown')) document.querySelectorAll('.dl-dropdown.open').forEach(d=>d.classList.remove('open'));
+  if(!e.target.closest('.dl-dropdown'))document.querySelectorAll('.dl-dropdown.open').forEach(d=>d.classList.remove('open'));
 });
 
 loadData();
