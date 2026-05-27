@@ -706,7 +706,8 @@ function renderDrawerRows(){
     const consoleUrl=(r.dealerVinId&&r.eid&&r.teamId)?`https://console.spyne.ai/inventory/v2/listings/${r.dealerVinId}?enterprise_id=${r.eid}&team_id=${r.teamId}`:'';
     return`<tr>
       <td><div class="vin-cell">
-        ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">:''}
+        ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
+
         <span style="font-family:var(--f-mono);font-size:9px">${vinVal||'—'}</span>
         ${cbBtn(vinVal,'Copy VIN')}
       </div></td>
