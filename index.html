@@ -280,7 +280,21 @@ td:last-child{padding-right:16px;text-align:right}
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-label"><span class="sec-title">Enterprise Breakdown</span><span class="tag tag-blue" id="ent-tag">ALL</span></div>
-      <div class="dl-strip" id="dl-ent"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="dl-dropdown" id="dl-ent-all-dd">
+          <button class="dl-trigger" onclick="toggleDl('dl-ent-all-dd')" style="border-color:rgba(0,200,150,.3);color:var(--green)" title="Download all VIN rows">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            All VINs
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="dl-menu">
+            <button class="dl-item" onclick="dlAllVins('ent','csv');closeDl('dl-ent-all-dd')"><span class="dl-item-icon">📄</span>CSV</button>
+            <button class="dl-item" onclick="dlAllVins('ent','json');closeDl('dl-ent-all-dd')"><span class="dl-item-icon">{ }</span>JSON</button>
+            <button class="dl-item" onclick="dlAllVins('ent','xlsx');closeDl('dl-ent-all-dd')"><span class="dl-item-icon">📊</span>XLSX</button>
+          </div>
+        </div>
+        <div class="dl-strip" id="dl-ent"></div>
+      </div>
     </div>
     <div class="tbl-shell"><div class="tbl-scroll"><table>
       <thead><tr>
@@ -299,7 +313,21 @@ td:last-child{padding-right:16px;text-align:right}
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-label"><span class="sec-title">Team Breakdown</span><span class="tag tag-blue" id="team-tag">ALL TEAMS</span></div>
-      <div class="dl-strip" id="dl-team"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="dl-dropdown" id="dl-team-all-dd">
+          <button class="dl-trigger" onclick="toggleDl('dl-team-all-dd')" style="border-color:rgba(0,200,150,.3);color:var(--green)" title="Download all VIN rows">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            All VINs
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="dl-menu">
+            <button class="dl-item" onclick="dlAllVins('team','csv');closeDl('dl-team-all-dd')"><span class="dl-item-icon">📄</span>CSV</button>
+            <button class="dl-item" onclick="dlAllVins('team','json');closeDl('dl-team-all-dd')"><span class="dl-item-icon">{ }</span>JSON</button>
+            <button class="dl-item" onclick="dlAllVins('team','xlsx');closeDl('dl-team-all-dd')"><span class="dl-item-icon">📊</span>XLSX</button>
+          </div>
+        </div>
+        <div class="dl-strip" id="dl-team"></div>
+      </div>
     </div>
     <div class="tbl-shell"><div class="tbl-scroll"><table>
       <thead><tr>
@@ -794,6 +822,26 @@ function dlTbl(id,fmt,pre){
   }
 }
 
+function dlAllVins(src,fmt){
+  // Collect all VIN rows from all enterprises or teams in current filtered view
+  const tblKey = src==='ent'?'dl-ent':'dl-team';
+  const tblData = _tblData[tblKey];
+  if(!tblData?.length) return;
+  const allRows = tblData.flatMap(t=>t._rows||[]);
+  if(!allRows.length) return;
+  const label = src==='ent'?'all-enterprise-vins':'all-team-vins';
+  const keys = DL_KEYS;
+  const labels = DL_LABELS;
+  if(fmt==='csv'){
+    const c=[labels.join(','),...allRows.map(r=>keys.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');
+    dl(new Blob([c],{type:'text/csv'}),`${label}.csv`);
+  } else if(fmt==='json'){
+    dl(new Blob([JSON.stringify(allRows.map(r=>Object.fromEntries(keys.map((k,i)=>[labels[i],r[k]??'']))),null,2)],{type:'application/json'}),`${label}.json`);
+  } else {
+    const h=`<table><tr>${labels.map(l=>`<th>${l}</th>`).join('')}</tr>${allRows.map(r=>`<tr>${keys.map(k=>`<td>${r[k]??''}</td>`).join('')}</tr>`).join('')}</table>`;
+    dl(new Blob([`<html><body>${h}</body></html>`],{type:'application/vnd.ms-excel'}),`${label}.xls`);
+  }
+}
 function rerender(){
   const rows=f(),l=lbl();
   renderMetrics(rows);renderHours(rows);renderCharts(rows);renderTypeCards();
