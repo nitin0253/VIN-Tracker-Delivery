@@ -1,6 +1,7 @@
 let vinCache = null, entCache = null, lastFetch = 0;
 const CACHE_TTL = 5 * 60 * 1000;
-const VIN_URL = "https://metabase.spyne.ai/public/question/7f434e89-1ab4-43e9-8633-841e7076d2f7.csv";
+// const VIN_URL = "https://metabase.spyne.ai/public/question/7f434e89-1ab4-43e9-8633-841e7076d2f7.csv";
+const VIN_URL = "https://metabase.spyne.ai/public/question/ad4e7f5a-e5f0-406d-9095-489d3fb3c460.csv";
 const ENT_URL = "https://metabase.spyne.ai/public/question/b8f1271c-cc5a-470f-badf-807711f74af4.csv";
 
 function splitRow(row) {
