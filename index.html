@@ -890,11 +890,14 @@ function toggleTheme(){
 }
 (()=>{const s=localStorage.getItem('qc-theme');if(s){document.documentElement.setAttribute('data-theme',s);document.getElementById('tbtn').textContent=s==='dark'?'🌙':'☀️';}})();
 
-const AUTO_MS=15*60*1000;let _refreshStart=Date.now(),_refreshTimer=null;
+const AUTO_MS=15*60*1000;let _refreshStart=Date.now(),_refreshTimer=null,_pausedAt=null;
 const RING_CIRC=87.96;
 function startAutoRefresh(){
-  clearInterval(_refreshTimer);_refreshStart=Date.now();updateRing();
-  _refreshTimer=setInterval(()=>{updateRing();if(Date.now()-_refreshStart>=AUTO_MS)loadData();},1000);
+  clearInterval(_refreshTimer);_refreshStart=Date.now();_pausedAt=null;updateRing();
+  _refreshTimer=setInterval(()=>{
+    if(document.hidden)return; // don't tick or refresh while tab is backgrounded
+    updateRing();if(Date.now()-_refreshStart>=AUTO_MS)loadData();
+  },1000);
 }
 function updateRing(){
   const elapsed=Date.now()-_refreshStart,progress=Math.min(elapsed/AUTO_MS,1),remaining=Math.max(AUTO_MS-elapsed,0);
@@ -905,6 +908,15 @@ function updateRing(){
   label.textContent=String(Math.floor(ts/60)).padStart(2,'0')+':'+String(ts%60).padStart(2,'0');
   ring.style.stroke=remaining<60000?'var(--red)':'var(--green)';
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    _pausedAt=Date.now();
+  }else if(_pausedAt){
+    _refreshStart += (Date.now()-_pausedAt);
+    _pausedAt=null;
+    updateRing();
+  }
+});
 function manualRefresh(){clearInterval(_refreshTimer);loadData();}
 function showSkeleton(){
   const el=document.getElementById('metrics');
