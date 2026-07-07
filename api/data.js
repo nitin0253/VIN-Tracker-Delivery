@@ -1,8 +1,10 @@
-let vinCache = null, entCache = null, lastFetch = 0;
-const CACHE_TTL = 5 * 60 * 1000;
+import { kv } from '@vercel/kv';
+
 // const VIN_URL = "https://metabase.spyne.ai/public/question/7f434e89-1ab4-43e9-8633-841e7076d2f7.csv";
 const VIN_URL = "https://metabase.spyne.ai/public/question/ad4e7f5a-e5f0-406d-9095-489d3fb3c460.csv";
 const ENT_URL = "https://metabase.spyne.ai/public/question/b8f1271c-cc5a-470f-badf-807711f74af4.csv";
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const KV_KEY = 'vin-tracker:data';
 
 function splitRow(row) {
   const out = []; let cur = '', q = false;
@@ -34,8 +36,7 @@ function hoursAgo(ts, now) {
   const h = (now - d) / 3600000; return h >= 0 ? h : null;
 }
 
-async function buildCache() {
-  if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
+async function fetchAndBuild() {
   const now = Date.now();
 
   const [vinResp, entResp] = await Promise.all([
@@ -63,7 +64,7 @@ async function buildCache() {
     });
   }
 
-  vinCache = rawVin.map(r => {
+  const rows = rawVin.map(r => {
     const eid = pick(r, 'enterpriseId');
     const tid = pick(r, 'teamId');
     const ent = entMap[eid] || {};
@@ -108,32 +109,47 @@ async function buildCache() {
     };
   });
 
-  entCache = Object.entries(entMap).map(([id, e]) => ({ id, ...e }));
-  lastFetch = now;
-  return { vinCache, entCache };
+  const ents = Object.entries(entMap).map(([id, e]) => ({ id, ...e }));
+  const payload = { rows, ents, total: rows.length, lastSynced: new Date(now).toISOString(), _fetchedAt: now };
+
+  // Fire-and-forget write so we don't block the response on KV latency
+  kv.set(KV_KEY, payload).catch(() => {});
+  return payload;
+}
+
+async function getData(force) {
+  if (!force) {
+    const cached = await kv.get(KV_KEY);
+    if (cached && Date.now() - cached._fetchedAt < CACHE_TTL) {
+      return cached;
+    }
+  }
+  return fetchAndBuild();
 }
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+
   try {
-    if (req.query.force === '1') { vinCache = null; entCache = null; lastFetch = 0; }
-    const { vinCache: rows, entCache: ents } = await buildCache();
+    const data = await getData(req.query.force === '1');
     if (req.query.debug === '1') {
       return res.status(200).json({
-        totalVins: rows.length, totalEnts: ents.length,
-        sampleVin: rows[0], sampleEnt: ents[0],
-        uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
-        uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],
-        uniqueCustomerSegment: [...new Set(rows.map(r => r.customerSegment).filter(Boolean))],
-        uniqueCrmStatus:       [...new Set(rows.map(r => r.crmStatus).filter(Boolean))],
-        pocEmailSample: rows.filter(r => r.entEmail).slice(0, 5).map(r => ({
+        totalVins: data.rows.length, totalEnts: data.ents.length,
+        sampleVin: data.rows[0], sampleEnt: data.ents[0],
+        uniqueRB:              [...new Set(data.rows.map(r => r.rb).filter(Boolean))],
+        uniqueType:            [...new Set(data.rows.map(r => r.type).filter(Boolean))],
+        uniqueCustomerSegment: [...new Set(data.rows.map(r => r.customerSegment).filter(Boolean))],
+        uniqueCrmStatus:       [...new Set(data.rows.map(r => r.crmStatus).filter(Boolean))],
+        pocEmailSample: data.rows.filter(r => r.entEmail).slice(0, 5).map(r => ({
           eid: r.eid, entName: r.entName, email: r.entEmail
         })),
+        lastSynced: data.lastSynced,
       });
     }
-    res.status(200).json({ rows, ents, total: rows.length, lastSynced: new Date(lastFetch).toISOString() });
+    const { rows, ents, total, lastSynced } = data;
+    res.status(200).json({ rows, ents, total, lastSynced });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
