@@ -142,7 +142,7 @@ td:last-child{padding-right:16px;text-align:right}
 .link-btn-console{color:var(--green);border-color:rgba(0,200,150,.3);background:rgba(0,200,150,.06)}
 .link-btn-console:hover{background:rgba(0,200,150,.12);border-color:var(--green)}
 .drw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;backdrop-filter:blur(4px)}
-.drw{position:fixed;right:0;top:0;bottom:0;width:min(900px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
+.drw{position:fixed;right:0;top:0;bottom:0;width:min(1140px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
 .drw.open{transform:translateX(0)}
 .drw-hdr{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--rim);flex-shrink:0}
 .drw-back{width:30px;height:30px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--t2);display:grid;place-items:center;font-size:14px;flex-shrink:0;transition:all .14s}
@@ -685,8 +685,12 @@ function openDrawer(title,rows,rowData){
         <table>
           <thead><tr>
             <th onclick="sortDrawer('vin')">VIN / Thumb</th>
+            <th onclick="sortDrawer('dealerVinId')">Dealer VIN ID</th>
+            <th onclick="sortDrawer('skuId')">SKU ID</th>
             <th onclick="sortDrawer('entName')">Enterprise</th>
+            <th onclick="sortDrawer('eid')">Ent ID</th>
             <th onclick="sortDrawer('teamName')">Team</th>
+            <th onclick="sortDrawer('teamId')">Team ID</th>
             <th onclick="sortDrawer('type')">Type</th>
             <th onclick="sortDrawer('make')">Make/Model</th>
             <th onclick="sortDrawer('rb')">RB</th>
@@ -736,17 +740,32 @@ function renderDrawerRows(){
     return`<tr>
       <td><div class="vin-cell">
         ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
-
         <span style="font-family:var(--f-mono);font-size:9px">${vinVal||'—'}</span>
         ${cbBtn(vinVal,'Copy VIN')}
+      </div></td>
+      <td><div style="display:flex;align-items:center;gap:3px">
+        <span class="id-chip" title="${r.dealerVinId||''}">${r.dealerVinId||'—'}</span>
+        ${cbBtn(r.dealerVinId,'Copy Dealer VIN ID')}
+      </div></td>
+      <td><div style="display:flex;align-items:center;gap:3px">
+        <span class="id-chip" title="${r.skuId||''}">${r.skuId||'—'}</span>
+        ${cbBtn(r.skuId,'Copy SKU ID')}
       </div></td>
       <td style="font-size:11px"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
         <span>${entVal||'—'}</span>
         ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}
         ${cbBtn(entVal,'Copy enterprise')}
       </div></td>
+      <td><div style="display:flex;align-items:center;gap:3px">
+        <span class="id-chip" title="${r.eid||''}">${r.eid||'—'}</span>
+        ${cbBtn(r.eid,'Copy enterprise ID')}
+      </div></td>
       <td style="font-size:10px"><div style="display:flex;align-items:center;gap:3px">
-        <span>${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team')}
+        <span>${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team name')}
+      </div></td>
+      <td><div style="display:flex;align-items:center;gap:3px">
+        <span class="id-chip" title="${r.teamId||''}">${r.teamId||'—'}</span>
+        ${cbBtn(r.teamId,'Copy team ID')}
       </div></td>
       <td>${r.type||'—'}</td>
       <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
@@ -779,8 +798,8 @@ function anyFilterActive(){return!!(_activeStatus||_activeType||_activeBkt||_act
 function updateResetBtn(){const b=document.getElementById('reset-btn');if(b)b.style.display=anyFilterActive()?'inline-flex':'none';}
 
 function dl(blob,n){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-const DL_KEYS=['vin','entName','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
-const DL_LABELS=['VIN','Enterprise','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
+const DL_KEYS=['vin','dealerVinId','skuId','eid','entName','teamId','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
+const DL_LABELS=['VIN','Dealer VIN ID','SKU ID','Enterprise ID','Enterprise','Team ID','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
 function dlDrawer(fmt){
   if(!_drawerRows.length)return;
   if(fmt==='csv'){const c=[DL_LABELS.join(','),..._drawerRows.map(r=>DL_KEYS.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');dl(new Blob([c],{type:'text/csv'}),'qc-vins.csv');}
@@ -956,7 +975,7 @@ function handleUpload(evt){
     const rows=parsed.slice(1).filter(vals=>vals.some(v=>v.trim())).map(vals=>{
       const r={};hdrs.forEach((h,i)=>r[h]=vals[i]??'');
       return{
-        vin:pk(r,'vinName'),dealerVinId:pk(r,'dealerVinId'),eid:pk(r,'enterpriseId'),
+        vin:pk(r,'vinName'),dealerVinId:pk(r,'dealerVinId'),skuId:pk(r,'sd.sku_id','sku_id','skuId'),eid:pk(r,'enterpriseId'),
         entName:pk(r,'enterprise_name')||pk(r,'enterpriseId'),
         teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),
         customerSegment:pk(r,'customer_segment'),
@@ -993,7 +1012,8 @@ async function loadData(){
     const _ha=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(_now-d)/3600000;return h>=0?h:null;};
     const normRows=j.rows.map(r=>({
       vin:r.vin||r.vinName||'',
-      dealerVinId:r.dealerVinId||'',
+      dealerVinId:r.dealerVinId||r.dealer_vin_id||'',
+      skuId:r.skuId||r['sd.sku_id']||r.sku_id||'',
       eid:r.eid||r.enterpriseId||'',
       entName:r.entName||r.enterprise_name||r.enterpriseId||'',
       teamId:r.teamId||'',
