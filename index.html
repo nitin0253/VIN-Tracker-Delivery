@@ -125,7 +125,7 @@ td:last-child{padding-right:16px;text-align:right}
 .ent-stage{font-size:9px;font-family:var(--f-mono);padding:1px 6px;border-radius:3px}
 .stage-live{background:rgba(0,229,160,.1);color:var(--green)}
 .stage-onboard{background:rgba(245,166,35,.1);color:var(--amber)}
-.id-chip{display:inline-block;font-family:var(--f-mono);font-size:8px;color:var(--t3);background:var(--card2);border:1px solid var(--rim);border-radius:3px;padding:1px 5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+.id-chip{display:inline-block;font-family:var(--f-mono);font-size:9px;color:var(--t2);background:var(--card2);border:1px solid var(--rim);border-radius:3px;padding:1px 5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 .poc-chip{font-size:9px;font-family:var(--f-mono);color:var(--teal);background:rgba(45,212,207,.08);border:1px solid rgba(45,212,207,.2);border-radius:3px;padding:1px 6px;display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .copy-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:var(--card2);border:1px solid var(--rim);color:var(--t3);font-size:10px;cursor:pointer;flex-shrink:0;transition:all .15s;vertical-align:middle;margin-left:3px;line-height:1;font-family:var(--f-mono)}
 .copy-btn:hover{background:var(--ag);border-color:var(--accent);color:var(--accent)}
@@ -142,28 +142,28 @@ td:last-child{padding-right:16px;text-align:right}
 .link-btn-console{color:var(--green);border-color:rgba(0,200,150,.3);background:rgba(0,200,150,.06)}
 .link-btn-console:hover{background:rgba(0,200,150,.12);border-color:var(--green)}
 .drw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;backdrop-filter:blur(4px)}
-.drw{position:fixed;right:0;top:0;bottom:0;width:min(1140px,96vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
+.drw{position:fixed;right:0;top:0;bottom:0;width:min(1400px,98vw);background:var(--panel);border-left:1px solid var(--rim);z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 60px rgba(0,0,0,.5)}
 .drw.open{transform:translateX(0)}
 .drw-hdr{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--rim);flex-shrink:0}
 .drw-back{width:30px;height:30px;border-radius:7px;border:1px solid var(--rim);background:var(--card);color:var(--t2);display:grid;place-items:center;font-size:14px;flex-shrink:0;transition:all .14s}
 .drw-back:hover{border-color:var(--accent);color:var(--accent)}
 .drw-hdr-info{flex:1;min-width:0}
-.drw-title{font-size:14px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.drw-subtitle{font-size:11px;font-family:var(--f-mono);color:var(--t2);margin-top:1px;letter-spacing:.3px}
+.drw-title{font-size:17px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drw-subtitle{font-size:13px;font-family:var(--f-mono);color:var(--t2);margin-top:1px;letter-spacing:.3px}
 .drw-hdr-actions{display:flex;gap:6px;flex-shrink:0}
 .drw-body{flex:1;overflow-y:auto;padding:20px 22px}
 .drw-body::-webkit-scrollbar{width:3px}
 .drw-body::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:2px}
 .drw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
 .ds{background:var(--card);border:1px solid var(--rim);border-radius:10px;padding:12px 14px}
-.ds-val{font-size:22px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
-.ds-label{font-size:10px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+.ds-val{font-size:28px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.ds-label{font-size:11px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
 .drw-tbl-wrap{background:var(--card);border:1px solid var(--rim);border-radius:10px;overflow:hidden}
-.drw-tbl-wrap table{font-size:11px}
-.drw-tbl-wrap th{font-size:7px;padding:7px 11px}
-.drw-tbl-wrap td{padding:7px 11px}
-.drw-tbl-wrap th:first-child,.drw-tbl-wrap td:first-child{padding-left:14px}
-.thumb-img{width:52px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--rim);flex-shrink:0}
+.drw-tbl-wrap table{font-size:13px}
+.drw-tbl-wrap th{font-size:10px;padding:9px 13px}
+.drw-tbl-wrap td{padding:9px 13px}
+.drw-tbl-wrap th:first-child,.drw-tbl-wrap td:first-child{padding-left:16px}
+.thumb-img{width:64px;height:46px;object-fit:cover;border-radius:5px;border:1px solid var(--rim);flex-shrink:0}
 .vin-cell{display:flex;align-items:center;gap:8px}
 .no-data{text-align:center;padding:40px;font-family:var(--f-mono);font-size:10px;color:var(--t3);letter-spacing:.5px}
 #uf{display:none;background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:28px 32px;margin-bottom:28px}
@@ -739,15 +739,15 @@ function renderDrawerRows(){
     return`<tr>
       <td><div class="vin-cell">
         ${r.thumbnail?`<img class="thumb-img" src="${r.thumbnail}" loading="lazy" onerror="this.style.display='none'">`:''}
-        <span style="font-family:var(--f-mono);font-size:9px">${vinVal||'—'}</span>
+        <span style="font-family:var(--f-mono);font-size:12px;color:var(--t1)">${vinVal||'—'}</span>
         ${cbBtn(vinVal,'Copy VIN')}
       </div></td>
       <td><div style="display:flex;align-items:center;gap:3px">
         <span class="id-chip" title="${r.skuId||''}">${r.skuId||'—'}</span>
         ${cbBtn(r.skuId,'Copy SKU ID')}
       </div></td>
-      <td style="font-size:11px"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
-        <span>${entVal||'—'}</span>
+      <td style="font-size:13px;color:var(--t1)"><div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+        <span style="font-weight:500">${entVal||'—'}</span>
         ${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:''}
         ${cbBtn(entVal,'Copy enterprise')}
       </div></td>
@@ -755,20 +755,20 @@ function renderDrawerRows(){
         <span class="id-chip" title="${r.eid||''}">${r.eid||'—'}</span>
         ${cbBtn(r.eid,'Copy enterprise ID')}
       </div></td>
-      <td style="font-size:10px"><div style="display:flex;align-items:center;gap:3px">
-        <span>${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team name')}
+      <td style="font-size:13px;color:var(--t1)"><div style="display:flex;align-items:center;gap:3px">
+        <span style="font-weight:500">${teamVal||'—'}</span>${cbBtn(teamVal,'Copy team name')}
       </div></td>
       <td><div style="display:flex;align-items:center;gap:3px">
         <span class="id-chip" title="${r.teamId||''}">${r.teamId||'—'}</span>
         ${cbBtn(r.teamId,'Copy team ID')}
       </div></td>
-      <td>${r.type||'—'}</td>
-      <td style="font-size:10px">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
-      <td style="font-size:10px">${r.rb||'—'}</td>
+      <td style="font-size:13px;color:var(--t1);font-weight:500">${r.type||'—'}</td>
+      <td style="font-size:13px;color:var(--t1)">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
+      <td style="font-size:13px;color:var(--t1)">${r.rb||'—'}</td>
       <td>${crmChip(r.crmStatus)}</td>
-      <td style="font-size:9px;color:var(--amber)">${r.holdReason||'—'}</td>
-      <td style="font-family:var(--f-mono)">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
-      <td style="font-family:var(--f-mono)">${r.imgCount||0}</td>
+      <td style="font-size:12px;color:var(--amber)">${r.holdReason||'—'}</td>
+      <td style="font-family:var(--f-mono);font-size:13px;color:var(--t1)">${r.hrsRecv!=null?r.hrsRecv.toFixed(1)+'h':'—'}</td>
+      <td style="font-family:var(--f-mono);font-size:13px;color:var(--t1)">${r.imgCount||0}</td>
       <td style="text-align:center"><div style="display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:nowrap">
         ${r.vdpUrl?`<a class="link-btn link-btn-vdp" href="${r.vdpUrl}" target="_blank" onclick="event.stopPropagation()">
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>VDP</a>`:'<span style="color:var(--t3);font-size:9px">—</span>'}
