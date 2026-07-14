@@ -71,7 +71,7 @@ async function buildCache() {
       vin:             pick(r, 'vinName'),
       dealerVinId:     pick(r, 'dealerVinId'),
       eid,
-      entName:         ent.name  || pick(r, 'enterprise_name') || eid,
+      entName:         pick(r, 'enterprise_name') || ent.name  || eid,
       entType:         ent.type  || '',
       entStage:        ent.stage || '',
       entEmail:        ent.email || '',
