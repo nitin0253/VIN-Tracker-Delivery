@@ -84,6 +84,7 @@ async function buildCache() {
       year:            pick(r, 'year'),
       trim:            pick(r, 'trim'),
       stock:           pick(r, 'stockNumber'),
+      skuId:           pick(r, 'sd.sku_id', 'sku_id', 'skuId'),
       platform:        pick(r, 'platform'),
       type:            pick(r, 'type') || pick(r, 'platform'),
       status:          pick(r, 'status_overallStatus', 'status'),
