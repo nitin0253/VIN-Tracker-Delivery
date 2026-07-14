@@ -685,7 +685,6 @@ function openDrawer(title,rows,rowData){
         <table>
           <thead><tr>
             <th onclick="sortDrawer('vin')">VIN / Thumb</th>
-            <th onclick="sortDrawer('dealerVinId')">Dealer VIN ID</th>
             <th onclick="sortDrawer('skuId')">SKU ID</th>
             <th onclick="sortDrawer('entName')">Enterprise</th>
             <th onclick="sortDrawer('eid')">Ent ID</th>
@@ -744,10 +743,6 @@ function renderDrawerRows(){
         ${cbBtn(vinVal,'Copy VIN')}
       </div></td>
       <td><div style="display:flex;align-items:center;gap:3px">
-        <span class="id-chip" title="${r.dealerVinId||''}">${r.dealerVinId||'—'}</span>
-        ${cbBtn(r.dealerVinId,'Copy Dealer VIN ID')}
-      </div></td>
-      <td><div style="display:flex;align-items:center;gap:3px">
         <span class="id-chip" title="${r.skuId||''}">${r.skuId||'—'}</span>
         ${cbBtn(r.skuId,'Copy SKU ID')}
       </div></td>
@@ -798,8 +793,8 @@ function anyFilterActive(){return!!(_activeStatus||_activeType||_activeBkt||_act
 function updateResetBtn(){const b=document.getElementById('reset-btn');if(b)b.style.display=anyFilterActive()?'inline-flex':'none';}
 
 function dl(blob,n){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-const DL_KEYS=['vin','dealerVinId','skuId','eid','entName','teamId','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
-const DL_LABELS=['VIN','Dealer VIN ID','SKU ID','Enterprise ID','Enterprise','Team ID','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
+const DL_KEYS=['vin','skuId','eid','entName','teamId','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
+const DL_LABELS=['VIN','SKU ID','Enterprise ID','Enterprise','Team ID','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
 function dlDrawer(fmt){
   if(!_drawerRows.length)return;
   if(fmt==='csv'){const c=[DL_LABELS.join(','),..._drawerRows.map(r=>DL_KEYS.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');dl(new Blob([c],{type:'text/csv'}),'qc-vins.csv');}
@@ -878,7 +873,7 @@ function rerender(){
   const tMap={};
   rows.forEach(r=>{
     const t=r.teamName||r.teamId||'Unknown';
-    if(!tMap[t])tMap[t]={name:t,teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
+    if(!tMap[t])tMap[t]={name:r.teamName||r.teamId||'Unknown',teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
     addB(tMap[t],r.hrsRecv);tMap[t]._rows.push(r);
     if(!tMap[t].email&&r.entEmail)tMap[t].email=r.entEmail;
   });
@@ -975,9 +970,9 @@ function handleUpload(evt){
     const rows=parsed.slice(1).filter(vals=>vals.some(v=>v.trim())).map(vals=>{
       const r={};hdrs.forEach((h,i)=>r[h]=vals[i]??'');
       return{
-        vin:pk(r,'vinName'),dealerVinId:pk(r,'dealerVinId'),skuId:pk(r,'sd.sku_id','sku_id','skuId'),eid:pk(r,'enterpriseId'),
+        vin:pk(r,'vinName'),skuId:pk(r,'sd.sku_id','sku_id','skuId'),eid:pk(r,'enterpriseId'),
         entName:pk(r,'enterprise_name')||pk(r,'enterpriseId'),
-        teamId:pk(r,'teamId'),teamName:pk(r,'team_name'),
+        teamId:pk(r,'teamId'),teamName:pk(r,'team_name','teamName'),
         customerSegment:pk(r,'customer_segment'),
         crmStatus:pk(r,'crm_status'),
         make:pk(r,'make'),model:pk(r,'model'),year:pk(r,'year'),
@@ -1012,12 +1007,11 @@ async function loadData(){
     const _ha=ts=>{if(!ts)return null;const d=new Date(ts);if(isNaN(d))return null;const h=(_now-d)/3600000;return h>=0?h:null;};
     const normRows=j.rows.map(r=>({
       vin:r.vin||r.vinName||'',
-      dealerVinId:r.dealerVinId||r.dealer_vin_id||'',
       skuId:r.skuId||r['sd.sku_id']||r.sku_id||'',
       eid:r.eid||r.enterpriseId||'',
-      entName:r.entName||r.enterprise_name||r.enterpriseId||'',
+      entName:r.enterprise_name||r.entName||r.enterpriseId||'',
       teamId:r.teamId||'',
-      teamName:r.teamName||r.team_name||'',
+      teamName:r.team_name||r.teamName||'',
       customerSegment:(r.customerSegment||r.customer_segment||'').trim(),
       crmStatus:(r.crmStatus||r.crm_status||'').trim(),
       make:r.make||'',model:r.model||'',year:r.year||'',
