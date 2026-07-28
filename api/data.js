@@ -1,8 +1,68 @@
 let vinCache = null, entCache = null, lastFetch = 0;
 const CACHE_TTL = 5 * 60 * 1000;
-// const VIN_URL = "https://metabase.spyne.ai/public/question/7f434e89-1ab4-43e9-8633-841e7076d2f7.csv";
-const VIN_URL = "https://metabase.spyne.ai/public/question/ad4e7f5a-e5f0-406d-9095-489d3fb3c460.csv";
-const ENT_URL = "https://metabase.spyne.ai/public/question/b8f1271c-cc5a-470f-badf-807711f74af4.csv";
+
+// ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
+//    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
+const MB = (process.env.METABASE_URL || 'https://metabase.spyne.ai').replace(/\/+$/, '');
+const VIN_CARD_ID = process.env.VIN_CARD_ID || '12497';           // the private "VIN tracker" question
+const MB_USER     = process.env.METABASE_USER || '';
+const MB_PASS     = process.env.METABASE_PASSWORD || '';
+const MB_API_KEY  = process.env.METABASE_API_KEY || '';           // optional alternative to user/pass
+
+// Enterprise details stay on their existing PUBLIC link (no auth needed).
+const ENT_URL = process.env.ENT_URL
+  || "https://metabase.spyne.ai/public/question/b8f1271c-cc5a-470f-badf-807711f74af4.csv";
+
+// ── Metabase auth: cache a session token, re-login automatically on expiry ────────
+let mbSession = null;
+
+async function login() {
+  if (!MB_USER || !MB_PASS) {
+    throw new Error('Missing METABASE_USER / METABASE_PASSWORD env vars');
+  }
+  const resp = await fetch(`${MB}/api/session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: MB_USER, password: MB_PASS }),
+  });
+  if (!resp.ok) {
+    throw new Error(`Metabase login ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+  }
+  mbSession = (await resp.json()).id;
+  return mbSession;
+}
+
+function authHeaders(token) {
+  return MB_API_KEY ? { 'X-Api-Key': MB_API_KEY } : { 'X-Metabase-Session': token };
+}
+
+// Fetch a saved question's results as CSV via the authenticated API. This returns
+// the SAME CSV the public link did, so all the parsing below is unchanged.
+async function fetchCardCsv(cardId) {
+  const url = `${MB}/api/card/${cardId}/query/csv`;
+  const doFetch = (token) => fetch(url, {
+    method: 'POST',
+    headers: {
+      ...authHeaders(token),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'parameters=' + encodeURIComponent('[]'),
+  });
+
+  let token = MB_API_KEY ? null : (mbSession || await login());
+  let resp = await doFetch(token);
+
+  // Session expired / invalid → drop it, log in again, retry once.
+  if (!MB_API_KEY && (resp.status === 401 || resp.status === 403)) {
+    mbSession = null;
+    token = await login();
+    resp = await doFetch(token);
+  }
+  if (!resp.ok) {
+    throw new Error(`VIN card ${cardId} query ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+  }
+  return resp.text();
+}
 
 function splitRow(row) {
   const out = []; let cur = '', q = false;
@@ -38,16 +98,18 @@ async function buildCache() {
   if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
   const now = Date.now();
 
-  const [vinResp, entResp] = await Promise.all([
-    fetch(VIN_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
-    fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
+  // VIN question → authenticated Metabase API; enterprise → existing public link.
+  const [rawVinText, entResult] = await Promise.all([
+    fetchCardCsv(VIN_CARD_ID),
+    fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+      .then(r => (r.ok ? r.text() : null))
+      .catch(() => null),
   ]);
-  if (!vinResp.ok) throw new Error(`VIN CSV ${vinResp.status}`);
-  const rawVin = parseCSV(await vinResp.text());
+  const rawVin = parseCSV(rawVinText);
 
   const entMap = {};
-  if (entResp.ok) {
-    const rawEnt = parseCSV(await entResp.text());
+  if (entResult) {
+    const rawEnt = parseCSV(entResult);
     rawEnt.forEach(r => {
       const id = pick(r, 'dt.enterprise_id', 'enterprise_id', 'enterpriseId');
       if (id) {
