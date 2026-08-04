@@ -105,19 +105,36 @@ async function buildCache() {
   // (avoids two concurrent logins on a cold cache).
   if (!MB_API_KEY && !mbSession) await login();
 
-  // Both VIN questions (v2 + v1) → authenticated Metabase API; enterprise → public link.
-  // Each VIN fetch is resilient: if one version fails we still render the other.
-  const [rawVinV2, rawVinV1, entResult] = await Promise.all([
-    fetchCardCsv(VIN_CARD_ID_V2).catch(e => { console.error('VIN v2 fetch failed:', e.message); return ''; }),
-    fetchCardCsv(VIN_CARD_ID_V1).catch(e => { console.error('VIN v1 fetch failed:', e.message); return ''; }),
-    fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
-      .then(r => (r.ok ? r.text() : null))
-      .catch(() => null),
+  // Fetch both VIN questions + the enterprise link in parallel. We REQUIRE both
+  // VIN cards to return data before publishing — a partial (single-version)
+  // result must never overwrite a good, complete snapshot. The v2 query is slow,
+  // so this guards against a timeout/failure silently dropping a whole version.
+  const entPromise = fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+    .then(r => (r.ok ? r.text() : null))
+    .catch(() => null);
+  const [resV2, resV1] = await Promise.allSettled([
+    fetchCardCsv(VIN_CARD_ID_V2),
+    fetchCardCsv(VIN_CARD_ID_V1),
   ]);
-  const rowsV2 = parseCSV(rawVinV2); rowsV2.forEach(r => { r.__version = 'v2'; });
-  const rowsV1 = parseCSV(rawVinV1); rowsV1.forEach(r => { r.__version = 'v1'; });
+  const entResult = await entPromise;
+
+  const rowsV2 = resV2.status === 'fulfilled' ? parseCSV(resV2.value) : [];
+  const rowsV1 = resV1.status === 'fulfilled' ? parseCSV(resV1.value) : [];
+  const failV2 = resV2.status !== 'fulfilled' || !rowsV2.length;
+  const failV1 = resV1.status !== 'fulfilled' || !rowsV1.length;
+  if (failV2 || failV1) {
+    const why = [
+      failV2 && `v2=${resV2.status === 'rejected' ? (resV2.reason && resV2.reason.message) : 'empty'}`,
+      failV1 && `v1=${resV1.status === 'rejected' ? (resV1.reason && resV1.reason.message) : 'empty'}`,
+    ].filter(Boolean).join(', ');
+    // Never publish/cache a partial result. Keep serving the last complete
+    // snapshot if we have one; otherwise surface the error (uncached — see handler).
+    if (vinCache) { console.warn(`Incomplete VIN fetch (${why}); keeping previous complete cache.`); return { vinCache, entCache }; }
+    throw new Error(`VIN fetch incomplete — refusing to publish partial data (${why})`);
+  }
+  rowsV2.forEach(r => { r.__version = 'v2'; });
+  rowsV1.forEach(r => { r.__version = 'v1'; });
   const rawVin = [...rowsV2, ...rowsV1];
-  if (!rawVin.length) throw new Error('Both VIN cards (v1 + v2) returned no data');
 
   const entMap = {};
   if (entResult) {
@@ -216,6 +233,9 @@ export default async function handler(req, res) {
     }
     res.status(200).json({ rows, ents, total: rows.length, lastSynced: new Date(lastFetch).toISOString() });
   } catch (err) {
+    // Errors must not be cached by the CDN — otherwise a single failed refresh
+    // would be served for the whole s-maxage window instead of retrying.
+    res.setHeader('Cache-Control', 'no-store');
     res.status(500).json({ error: err.message });
   }
 }
