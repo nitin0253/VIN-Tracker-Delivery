@@ -4,7 +4,10 @@ const CACHE_TTL = 5 * 60 * 1000;
 // ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
 //    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
 const MB = (process.env.METABASE_URL || 'https://metabase.spyne.ai').replace(/\/+$/, '');
-const VIN_CARD_ID = process.env.VIN_CARD_ID || '12497';           // the private "VIN tracker" question
+// Two "VIN tracker" questions with identical columns — v2 (12497) and v1 (12832).
+// The dashboard merges both. VIN_CARD_ID (legacy) still works as the v2 id.
+const VIN_CARD_ID_V2 = process.env.VIN_CARD_ID_V2 || process.env.VIN_CARD_ID || '12497';
+const VIN_CARD_ID_V1 = process.env.VIN_CARD_ID_V1 || '12832';
 const MB_USER     = process.env.METABASE_USER || '';
 const MB_PASS     = process.env.METABASE_PASSWORD || '';
 const MB_API_KEY  = process.env.METABASE_API_KEY || '';           // optional alternative to user/pass
@@ -98,14 +101,23 @@ async function buildCache() {
   if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
   const now = Date.now();
 
-  // VIN question → authenticated Metabase API; enterprise → existing public link.
-  const [rawVinText, entResult] = await Promise.all([
-    fetchCardCsv(VIN_CARD_ID),
+  // Log in once up front so the two parallel VIN fetches share a single session
+  // (avoids two concurrent logins on a cold cache).
+  if (!MB_API_KEY && !mbSession) await login();
+
+  // Both VIN questions (v2 + v1) → authenticated Metabase API; enterprise → public link.
+  // Each VIN fetch is resilient: if one version fails we still render the other.
+  const [rawVinV2, rawVinV1, entResult] = await Promise.all([
+    fetchCardCsv(VIN_CARD_ID_V2).catch(e => { console.error('VIN v2 fetch failed:', e.message); return ''; }),
+    fetchCardCsv(VIN_CARD_ID_V1).catch(e => { console.error('VIN v1 fetch failed:', e.message); return ''; }),
     fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
       .then(r => (r.ok ? r.text() : null))
       .catch(() => null),
   ]);
-  const rawVin = parseCSV(rawVinText);
+  const rowsV2 = parseCSV(rawVinV2); rowsV2.forEach(r => { r.__version = 'v2'; });
+  const rowsV1 = parseCSV(rawVinV1); rowsV1.forEach(r => { r.__version = 'v1'; });
+  const rawVin = [...rowsV2, ...rowsV1];
+  if (!rawVin.length) throw new Error('Both VIN cards (v1 + v2) returned no data');
 
   const entMap = {};
   if (entResult) {
@@ -135,8 +147,8 @@ async function buildCache() {
       eid,
       entName:         pick(r, 'enterprise_name') || ent.name  || eid,
       entType:         ent.type  || '',
-      entStage:        ent.stage || '',
-      entEmail:        ent.email || '',
+      entStage:        ent.stage || pick(r, 'stage') || '',
+      entEmail:        ent.email || pick(r, 'email_id', 'poc_email', 'email') || '',
       teamId:          tid,
       teamName:        pick(r, 'team_name'),
       customerSegment: pick(r, 'customer_segment'),
@@ -168,6 +180,7 @@ async function buildCache() {
       sentAt:          pick(r, 'sentAt'),
       hrsVc:           hoursAgo(pick(r, 'vinCreation'), now),
       hrsRecv:         hoursAgo(pick(r, 'receivedAt'), now),
+      version:         r.__version || '',
     };
   });
 
@@ -189,6 +202,8 @@ export default async function handler(req, res) {
     if (req.query.debug === '1') {
       return res.status(200).json({
         totalVins: rows.length, totalEnts: ents.length,
+        byVersion: { v1: rows.filter(r => r.version === 'v1').length,
+                     v2: rows.filter(r => r.version === 'v2').length },
         sampleVin: rows[0], sampleEnt: ents[0],
         uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
         uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],
