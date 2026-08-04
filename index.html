@@ -465,14 +465,12 @@ function crmChip(v){
 function renderMetrics(rows){
   const total=rows.length,ents=[...new Set(rows.map(r=>r.eid).filter(Boolean))].length,
         teams=[...new Set(rows.map(r=>r.teamId).filter(Boolean))].length,
-        withImg=rows.filter(r=>r.imgCount>0).length,
-        avg24=rows.filter(r=>r.hrsRecv!=null&&r.hrsRecv>24).length;
+        withImg=rows.filter(r=>r.imgCount>0).length;
   const items=[
     {icon:'🔢',val:total,  label:'Total VINs', sub:lbl()||'QC Pending'},
     {icon:'🏢',val:ents,   label:'Enterprises',sub:'Unique'},
     {icon:'👥',val:teams,  label:'Teams',      sub:'Assigned'},
     {icon:'📸',val:withImg,label:'Has Images', sub:`${total?Math.round(withImg/total*100):0}%`},
-    {icon:'⏰',val:avg24,  label:'Over 24h',   sub:'Waiting'},
   ];
   document.getElementById('metrics').innerHTML=items.map(i=>
     `<div class="metric"><div class="metric-icon">${i.icon}</div>
@@ -989,7 +987,7 @@ document.addEventListener('visibilitychange',()=>{
 function manualRefresh(){clearInterval(_refreshTimer);loadData();}
 function showSkeleton(){
   const el=document.getElementById('metrics');
-  if(el)el.innerHTML=Array(5).fill('<div class="metric skel" style="height:100px"></div>').join('');
+  if(el)el.innerHTML=Array(4).fill('<div class="metric skel" style="height:100px"></div>').join('');
 }
 
 function parseCSVLine(line){
