@@ -1,7 +1,5 @@
 let vinCache = null, entCache = null, lastFetch = 0;
 const CACHE_TTL = 5 * 60 * 1000;
-// Diagnostics: raw CSV headers + one raw sample row per version (exposed via ?debug=1).
-let _dbgColsV1 = [], _dbgColsV2 = [], _dbgRawV1 = null, _dbgRawV2 = null;
 
 // ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
 //    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
@@ -122,8 +120,6 @@ async function buildCache() {
 
   const rowsV2 = resV2.status === 'fulfilled' ? parseCSV(resV2.value) : [];
   const rowsV1 = resV1.status === 'fulfilled' ? parseCSV(resV1.value) : [];
-  _dbgColsV2 = rowsV2[0] ? Object.keys(rowsV2[0]) : []; _dbgRawV2 = rowsV2[0] || null;
-  _dbgColsV1 = rowsV1[0] ? Object.keys(rowsV1[0]) : []; _dbgRawV1 = rowsV1[0] || null;
   const failV2 = resV2.status !== 'fulfilled' || !rowsV2.length;
   const failV1 = resV1.status !== 'fulfilled' || !rowsV1.length;
   if (failV2 || failV1) {
@@ -187,7 +183,10 @@ async function buildCache() {
       holdReason:      pick(r, 'hold_reason'),
       hasPhotos:       pick(r, 'has_photos'),
       after24:         pick(r, 'after_24_hrs'),
-      imgCount:        parseInt(pick(r, 'image_count')) || 0,
+      // "Images" on the dashboard = output (processed) image count. image_count
+      // (input images) is 0 for v1/API uploads, so output_image_count is the
+      // meaningful, populated value across both versions.
+      imgCount:        parseInt(pick(r, 'output_image_count')) || 0,
       vidCount:        parseInt(pick(r, 'video_count')) || 0,
       outImgs:         parseInt(pick(r, 'output_image_count')) || 0,
       overallScore:    pick(r, 'overall_score'),
@@ -225,8 +224,6 @@ export default async function handler(req, res) {
         totalVins: rows.length, totalEnts: ents.length,
         byVersion: { v1: rows.filter(r => r.version === 'v1').length,
                      v2: rows.filter(r => r.version === 'v2').length },
-        rawColsV1: _dbgColsV1, rawColsV2: _dbgColsV2,
-        rawSampleV1: _dbgRawV1, rawSampleV2: _dbgRawV2,
         sampleVin: rows[0], sampleEnt: ents[0],
         uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
         uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],

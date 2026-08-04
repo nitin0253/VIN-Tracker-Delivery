@@ -1030,7 +1030,7 @@ function handleUpload(evt){
         crmStatus:pk(r,'crm_status'),
         make:pk(r,'make'),model:pk(r,'model'),year:pk(r,'year'),
         type:pk(r,'type'),rb:pk(r,'reason_bucket'),holdReason:pk(r,'hold_reason'),
-        imgCount:parseInt(pk(r,'image_count'))||0,thumbnail:pk(r,'thumbnail_url'),
+        imgCount:parseInt(pk(r,'output_image_count','image_count'))||0,thumbnail:pk(r,'thumbnail_url'),
         vdpUrl:pk(r,'vdp_url'),entEmail:pk(r,'email_id','poc_email'),
         entStage:pk(r,'stage'),entType:pk(r,'type'),
         hrsRecv:hoursAgo(pk(r,'receivedAt')),hrsVc:hoursAgo(pk(r,'vinCreation')),
