@@ -54,16 +54,16 @@ a{color:inherit;text-decoration:none}
 .dl-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px;border-radius:7px;font-size:11px;font-family:var(--f-mono);color:var(--t2);cursor:pointer;transition:background .12s;text-align:left;white-space:nowrap}
 .dl-item:hover{background:var(--card2);color:var(--t1)}
 .dl-item-icon{font-size:13px;width:16px;text-align:center}
-.metric-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.metric{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s}
+.metric-strip{display:contents}
+.metric{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:16px 15px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s;flex:1 1 135px;min-width:0}
 .metric:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
 .metric-icon{font-size:20px;margin-bottom:8px;line-height:1}
 .metric-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
 .metric-label{font-size:11px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:6px}
 .metric-sub{font-size:12px;color:var(--t2);margin-top:3px}
-.ov-grid{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
-.status-cards{display:flex;gap:12px;flex-shrink:0}
-.stat-card{cursor:pointer;background:var(--card);border:1px solid var(--sc-border,var(--rim));border-radius:16px;padding:18px 22px;min-width:150px;flex:1;transition:transform .18s,box-shadow .18s,border-color .18s,background .18s;box-shadow:var(--sh)}
+.ov-grid{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
+.status-cards{display:contents}
+.stat-card{cursor:pointer;background:var(--card);border:1px solid var(--sc-border,var(--rim));border-radius:16px;padding:16px 15px;min-width:0;flex:1 1 135px;transition:transform .18s,box-shadow .18s,border-color .18s,background .18s;box-shadow:var(--sh)}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh2);border-color:var(--sc)}
 .stat-card.active{border-color:var(--sc);background:var(--sc-bg);box-shadow:0 0 0 2px var(--sc),0 4px 16px rgba(0,0,0,.3)}
 .stat-card-label{font-size:10px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:600;color:var(--sc)}
