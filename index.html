@@ -268,6 +268,11 @@ td:last-child{padding-right:16px;text-align:right}
           <div class="stat-card-val" id="heavy-card-val">0</div>
           <div class="stat-card-sub">QC Pending · Heavy Vehicles</div>
         </div>
+        <div class="stat-card" id="insta-card" onclick="setView('insta')" title="Click to filter by Instamotion &amp; Carvago2" style="--sc:var(--teal);--sc-border:rgba(45,212,207,.3);--sc-bg:rgba(45,212,207,.1)">
+          <div class="stat-card-label">Instamotion &amp; Carvago2</div>
+          <div class="stat-card-val" id="insta-card-val">0</div>
+          <div class="stat-card-sub">QC Pending · 2 accounts</div>
+        </div>
       </div>
     </div>
   </div>
@@ -404,10 +409,16 @@ const HEAVY_IDS=new Set([
   'a9fcbfff7', // Bush trucks Leasing
   '0c519f5f2', // SI Vallett Auto Sales
 ]);
+// Instamotion + Carvago2 — tracked on their own card (like Heavy). Edit to add/remove.
+const INSTA_IDS=new Set([
+  '00d2aafe9', // Instamotion
+  '8e2f0d75a', // Carvago2
+]);
 function stageOf(r){const ent=_entMap[r.eid]||{};return(ent.stage||r.entStage||'').trim().toLowerCase();}
 function isHeavy(r){return HEAVY_IDS.has((r.eid||'').trim());}
-// Segment of a QC Pending row. Heavy wins over Onboarding.
-function segOf(r){if(isHeavy(r))return'heavy';if(stageOf(r)==='onboarding')return'onboarding';return'pending';}
+function isInsta(r){return INSTA_IDS.has((r.eid||'').trim());}
+// Segment of a QC Pending row. Explicit ID lists (heavy, insta) win over onboarding.
+function segOf(r){if(isHeavy(r))return'heavy';if(isInsta(r))return'insta';if(stageOf(r)==='onboarding')return'onboarding';return'pending';}
 // Base rows for the active view, before the type/bucket/segment/hold-reason sub-filters.
 function viewRows(){
   const v=_activeView||'pending';
@@ -415,7 +426,7 @@ function viewRows(){
   const pend=_rows.filter(r=>(r.rb||'').trim()==='QC Pending');
   return pend.filter(r=>segOf(r)===v); // v ∈ pending | onboarding | heavy
 }
-function viewLabel(){const v=_activeView||'pending';return v==='hold'?'QC Hold':v==='onboarding'?'Onboarding':v==='heavy'?'Heavy & Exceptions':'QC Pending';}
+function viewLabel(){const v=_activeView||'pending';return v==='hold'?'QC Hold':v==='onboarding'?'Onboarding':v==='heavy'?'Heavy & Exceptions':v==='insta'?'Instamotion & Carvago2':'QC Pending';}
 
 function mkB(){ const o={total:0}; BKTS.forEach(b=>o[b.k]=0); return o; }
 function addB(o,h){ if(h==null)return; for(const b of BKTS){if(h>=b.min&&(b.max===9e9?true:h<b.max)){o[b.k]++;o.total++;return;}} }
@@ -488,12 +499,14 @@ function renderStatusCards(){
   const holdCount=_rows.filter(r=>(r.rb||'').trim()==='QC Hold').length;
   const onbCount=pend.filter(r=>segOf(r)==='onboarding').length;
   const heavyCount=pend.filter(r=>segOf(r)==='heavy').length;
+  const instaCount=pend.filter(r=>segOf(r)==='insta').length;
   const setVal=(id,n)=>{const el=document.getElementById(id);if(el)el.textContent=n.toLocaleString();};
-  setVal('hold-card-val',holdCount);setVal('onb-card-val',onbCount);setVal('heavy-card-val',heavyCount);
+  setVal('hold-card-val',holdCount);setVal('onb-card-val',onbCount);setVal('heavy-card-val',heavyCount);setVal('insta-card-val',instaCount);
   const v=_activeView||'pending';
   document.getElementById('hold-card')?.classList.toggle('active',v==='hold');
   document.getElementById('onb-card')?.classList.toggle('active',v==='onboarding');
   document.getElementById('heavy-card')?.classList.toggle('active',v==='heavy');
+  document.getElementById('insta-card')?.classList.toggle('active',v==='insta');
   const tag=document.getElementById('ov-tag');
   if(tag){tag.textContent=viewLabel().toUpperCase();tag.classList.toggle('tag-red',v==='hold');tag.classList.toggle('tag-blue',v!=='hold');}
 }
