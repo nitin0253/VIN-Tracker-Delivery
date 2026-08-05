@@ -145,6 +145,10 @@ td:last-child{padding-right:16px;text-align:right}
 .crm-inprogress{background:rgba(92,124,250,.2);border:1px solid rgba(92,124,250,.5);color:#7da4ff}
 .crm-onhold{background:rgba(240,81,110,.18);border:1px solid rgba(240,81,110,.45);color:#f0516e}
 .crm-assigned{background:rgba(0,200,150,.15);border:1px solid rgba(0,200,150,.4);color:#00c896}
+/* version chip */
+.ver-chip{display:inline-block;font-family:var(--f-mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+.ver-v2{color:var(--accent);border:1px solid rgba(92,124,250,.35);background:rgba(92,124,250,.12)}
+.ver-v1{color:var(--teal);border:1px solid rgba(45,212,207,.35);background:rgba(45,212,207,.12)}
 .link-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:9px;font-family:var(--f-mono);font-weight:600;border:1px solid;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;line-height:1.4}
 .link-btn-vdp{color:var(--accent);border-color:rgba(92,124,250,.3);background:var(--ag2)}
 .link-btn-vdp:hover{background:var(--ag);border-color:var(--accent)}
@@ -327,6 +331,7 @@ td:last-child{padding-right:16px;text-align:right}
       <thead><tr>
         <th style="min-width:200px"># Enterprise</th>
         <th style="min-width:120px">Enterprise ID</th>
+        <th style="min-width:70px">Version</th>
         <th style="min-width:80px">Stage</th>
         <th style="min-width:140px">Customer Segment</th>
         <th style="min-width:160px">POC Email</th>
@@ -360,6 +365,8 @@ td:last-child{padding-right:16px;text-align:right}
       <thead><tr>
         <th style="min-width:200px"># Team</th>
         <th style="min-width:120px">Team ID</th>
+        <th style="min-width:180px">Enterprise</th>
+        <th style="min-width:70px">Version</th>
         <th style="min-width:140px">Customer Segment</th>
         <th style="min-width:160px">POC Email</th>
         <th>0–2h</th><th>2–4h</th><th>4–6h</th><th>6–12h</th><th>12+h</th>
@@ -472,6 +479,13 @@ function crmChip(v){
   if(!v)return'<span style="color:var(--t3)">—</span>';
   const cls=v==='qc_assigned'||v.includes('assigned')&&!v.includes('un')?'crm-assigned':v.includes('unassigned')?'crm-unassigned':v.includes('inprogress')||v.includes('in_progress')?'crm-inprogress':v.includes('onhold')||v.includes('on_hold')?'crm-onhold':'crm-unassigned';
   return`<span class="crm-chip ${cls}">${v}</span>`;
+}
+
+// version chip (v1 / v2)
+function verChip(v){
+  if(!v)return'<span style="color:var(--t3)">—</span>';
+  const cls=String(v).toLowerCase()==='v1'?'ver-v1':'ver-v2';
+  return`<span class="ver-chip ${cls}">${v}</span>`;
 }
 
 function renderMetrics(rows){
@@ -619,12 +633,12 @@ function sortTableData(data,col,dir){
 function renderEntTbl(data){
   const tbodyId='ent-tbody';
   const tbody=document.getElementById(tbodyId);tbody.innerHTML='';
-  if(!data.length){tbody.innerHTML='<tr><td colspan="11" class="no-data">NO DATA</td></tr>';return;}
+  if(!data.length){tbody.innerHTML='<tr><td colspan="12" class="no-data">NO DATA</td></tr>';return;}
   const ss=_sortState[tbodyId]||{col:'total',dir:'desc'};
   const sorted=sortTableData(data,ss.col,ss.dir);
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
-    const colKeys=['name','id','stage','customerSegment','email',...BKTS.map(b=>b.k),'total'];
+    const colKeys=['name','id','version','stage','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
       const ck=colKeys[i];if(!ck)return;
@@ -650,6 +664,7 @@ function renderEntTbl(data){
         <span class="id-chip" title="${row.eid||''}">${row.eid||'—'}</span>
         ${cbBtn(row.eid,'Copy enterprise ID')}
       </div></td>
+      <td>${verChip(row.version||row._rows?.[0]?.version||'')}</td>
       <td>${stage?`<span class="ent-stage ${stageCls}">${stage}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
       <td><span style="font-size:10px;color:var(--t2)">${customerSegments.join(', ')||'—'}</span></td>
       <td><div style="display:flex;align-items:center;gap:4px">
@@ -665,7 +680,7 @@ function renderEntTbl(data){
   });
   const tot=mkB();data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
   const tf=document.createElement('tr');tf.className='tbl-foot';tf.style.cursor='default';
-  tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td><td>—</td>
+  tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
     ${BKTS.map(b=>`<td style="font-family:var(--f-mono);font-size:10px">${(tot[b.k]||0).toLocaleString()}</td>`).join('')}
     <td><span class="pill-chip">${tot.total.toLocaleString()}</span></td>`;
   tbody.appendChild(tf);
@@ -674,12 +689,12 @@ function renderEntTbl(data){
 function renderTeamTbl(data){
   const tbodyId='team-tbody';
   const tbody=document.getElementById(tbodyId);tbody.innerHTML='';
-  if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="no-data">NO DATA</td></tr>';return;}
+  if(!data.length){tbody.innerHTML='<tr><td colspan="12" class="no-data">NO DATA</td></tr>';return;}
   const ss=_sortState[tbodyId]||{col:'total',dir:'desc'};
   const sorted=sortTableData(data,ss.col,ss.dir);
   const thead=tbody.closest('table')?.querySelector('thead');
   if(thead){
-    const colKeys=['name','id','customerSegment','email',...BKTS.map(b=>b.k),'total'];
+    const colKeys=['name','id','entName','version','customerSegment','email',...BKTS.map(b=>b.k),'total'];
     thead.querySelectorAll('th').forEach((th,i)=>{
       th.classList.remove('sort-asc','sort-desc');
       const ck=colKeys[i];if(!ck)return;
@@ -701,6 +716,11 @@ function renderTeamTbl(data){
         <span class="id-chip" title="${row.teamId||''}">${row.teamId||'—'}</span>
         ${cbBtn(row.teamId,'Copy team ID')}
       </div></td>
+      <td><div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap">
+        <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px" title="${row.entName||''}">${row.entName||'—'}</span>
+        ${cbBtn(row.entName,'Copy enterprise name')}
+      </div></td>
+      <td>${verChip(row.version||'')}</td>
       <td><span style="font-size:10px;color:var(--t2)">${row.customerSegment||'—'}</span></td>
       <td><div style="display:flex;align-items:center;gap:4px">
         ${pocEmail?`<span class="poc-chip" title="${pocEmail}">${pocEmail}</span>${cbBtn(pocEmail,'Copy POC email')}`:'<span style="color:var(--t3);font-size:10px">—</span>'}
@@ -715,7 +735,7 @@ function renderTeamTbl(data){
   });
   const tot=mkB();data.forEach(r=>{BKTS.forEach(b=>{tot[b.k]=(tot[b.k]||0)+(r[b.k]||0);});tot.total+=r.total||0;});
   const tf=document.createElement('tr');tf.className='tbl-foot';tf.style.cursor='default';
-  tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td>
+  tf.innerHTML=`<td><strong>Subtotal</strong></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
     ${BKTS.map(b=>`<td style="font-family:var(--f-mono);font-size:10px">${(tot[b.k]||0).toLocaleString()}</td>`).join('')}
     <td><span class="pill-chip">${tot.total.toLocaleString()}</span></td>`;
   tbody.appendChild(tf);
@@ -759,6 +779,7 @@ function openDrawer(title,rows,rowData){
             <th onclick="sortDrawer('teamName')">Team</th>
             <th onclick="sortDrawer('teamId')">Team ID</th>
             <th onclick="sortDrawer('type')">Type</th>
+            <th onclick="sortDrawer('version')">Version</th>
             <th onclick="sortDrawer('make')">Make/Model</th>
             <th onclick="sortDrawer('rb')">RB</th>
             <th onclick="sortDrawer('crmStatus')">CRM Status</th>
@@ -831,6 +852,7 @@ function renderDrawerRows(){
         ${cbBtn(r.teamId,'Copy team ID')}
       </div></td>
       <td style="font-size:13px;color:var(--t1);font-weight:500">${r.type||'—'}</td>
+      <td>${verChip(r.version||'')}</td>
       <td style="font-size:13px;color:var(--t1)">${[r.make,r.model,r.year].filter(Boolean).join(' ')||'—'}</td>
       <td style="font-size:13px;color:var(--t1)">${r.rb||'—'}</td>
       <td>${crmChip(r.crmStatus)}</td>
@@ -863,8 +885,8 @@ function anyFilterActive(){return!!(_activeView||_activeType||_activeBkt||_activ
 function updateResetBtn(){const b=document.getElementById('reset-btn');if(b)b.style.display=anyFilterActive()?'inline-flex':'none';}
 
 function dl(blob,n){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-const DL_KEYS=['vin','skuId','eid','entName','teamId','teamName','type','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
-const DL_LABELS=['VIN','SKU ID','Enterprise ID','Enterprise','Team ID','Team','Type','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
+const DL_KEYS=['vin','skuId','eid','entName','teamId','teamName','type','version','customerSegment','crmStatus','make','model','year','rb','holdReason','hrsRecv','imgCount','vinScore','entEmail'];
+const DL_LABELS=['VIN','SKU ID','Enterprise ID','Enterprise','Team ID','Team','Type','Version','Customer Segment','CRM Status','Make','Model','Year','Reason Bucket','Hold Reason','Hrs(ReceivedAt)','Images','VIN Score','POC Email'];
 function dlDrawer(fmt){
   if(!_drawerRows.length)return;
   if(fmt==='csv'){const c=[DL_LABELS.join(','),..._drawerRows.map(r=>DL_KEYS.map(k=>{const v=String(r[k]??'');return/[,"]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(','))].join('\n');dl(new Blob([c],{type:'text/csv'}),'qc-vins.csv');}
@@ -894,8 +916,8 @@ function mkDl(id,pre){
 function dlTbl(id,fmt,pre){
   const d=_tblData[id];if(!d?.length)return;
   const isEnt=id==='dl-ent';
-  const extraK=isEnt?['eid','stage','customerSegment','email']:['teamId','customerSegment','email'];
-  const extraL=isEnt?['Enterprise ID','Stage','Customer Segment','POC Email']:['Team ID','Customer Segment','POC Email'];
+  const extraK=isEnt?['eid','version','stage','customerSegment','email']:['teamId','entName','version','customerSegment','email'];
+  const extraL=isEnt?['Enterprise ID','Version','Stage','Customer Segment','POC Email']:['Team ID','Enterprise','Version','Customer Segment','POC Email'];
   if(fmt==='csv')dl(new Blob([tblCSV(d,extraK,extraL)],{type:'text/csv'}),`${pre}.csv`);
   else if(fmt==='json')dl(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),`${pre}.json`);
   else{
@@ -932,7 +954,7 @@ function rerender(){
   const eMap={};
   rows.forEach(r=>{
     const e=r.entName||r.eid||'Unknown';
-    if(!eMap[e])eMap[e]={name:e,eid:r.eid,email:r.entEmail||'',...mkB(),_rows:[]};
+    if(!eMap[e])eMap[e]={name:e,eid:r.eid,version:r.version||'',email:r.entEmail||'',...mkB(),_rows:[]};
     addB(eMap[e],r.hrsRecv);eMap[e]._rows.push(r);
     if(!eMap[e].email&&r.entEmail)eMap[e].email=r.entEmail;
   });
@@ -943,7 +965,7 @@ function rerender(){
   const tMap={};
   rows.forEach(r=>{
     const t=r.teamName||r.teamId||'Unknown';
-    if(!tMap[t])tMap[t]={name:r.teamName||r.teamId||'Unknown',teamId:r.teamId,customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
+    if(!tMap[t])tMap[t]={name:r.teamName||r.teamId||'Unknown',teamId:r.teamId,entName:r.entName||'',version:r.version||'',customerSegment:r.customerSegment||'—',email:r.entEmail||'',...mkB(),_rows:[]};
     addB(tMap[t],r.hrsRecv);tMap[t]._rows.push(r);
     if(!tMap[t].email&&r.entEmail)tMap[t].email=r.entEmail;
   });
@@ -1049,7 +1071,7 @@ function handleUpload(evt){
         type:pk(r,'type'),rb:pk(r,'reason_bucket'),holdReason:pk(r,'hold_reason'),
         imgCount:parseInt(pk(r,'output_image_count','image_count'))||0,thumbnail:pk(r,'thumbnail_url'),
         vdpUrl:pk(r,'vdp_url'),entEmail:pk(r,'email_id','poc_email'),
-        entStage:pk(r,'stage'),entType:pk(r,'type'),
+        entStage:pk(r,'stage'),entType:pk(r,'type'),version:pk(r,'version'),
         hrsRecv:hoursAgo(pk(r,'receivedAt')),hrsVc:hoursAgo(pk(r,'vinCreation')),
       };
     });
@@ -1093,6 +1115,7 @@ async function loadData(){
       entEmail:r.entEmail||r.email_id||r.poc_email||'',
       entStage:r.entStage||r.stage||'',
       entType:r.entType||'',
+      version:r.version||'',
       hrsRecv:r.hrsRecv!=null?r.hrsRecv:_ha(r.receivedAt),
       hrsVc:r.hrsVc!=null?r.hrsVc:_ha(r.vinCreation),
     }));
