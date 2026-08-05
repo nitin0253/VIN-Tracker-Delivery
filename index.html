@@ -57,7 +57,8 @@ a{color:inherit;text-decoration:none}
 .metric-strip{display:contents}
 .metric{background:var(--card);border:1px solid var(--rim);border-radius:16px;padding:16px 15px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .18s,box-shadow .18s;flex:1 1 135px;min-width:0}
 .metric:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
-.metric-icon{font-size:20px;margin-bottom:8px;line-height:1}
+.metric-icon{font-size:20px;margin-bottom:8px;line-height:1;min-height:20px;display:flex;align-items:center}
+.live-pill{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-family:var(--f-mono);font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase}
 .metric-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
 .metric-label{font-size:11px;font-family:var(--f-mono);color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-top:6px}
 .metric-sub{font-size:12px;color:var(--t2);margin-top:3px}
@@ -477,8 +478,11 @@ function renderMetrics(rows){
   const total=rows.length,ents=[...new Set(rows.map(r=>r.eid).filter(Boolean))].length,
         teams=[...new Set(rows.map(r=>r.teamId).filter(Boolean))].length,
         withImg=rows.filter(r=>r.imgCount>0).length;
+  // Total VINs card shows a "Live" indicator in the default (unfiltered) state,
+  // and the 🔢 emoji once any card/filter is active.
+  const totalIcon=anyFilterActive()?'🔢':'<span class="live-pill"><span class="live-dot"></span>Live</span>';
   const items=[
-    {icon:'🔢',val:total,  label:'Total VINs', sub:lbl()||'QC Pending'},
+    {icon:totalIcon,val:total,  label:'Total VINs', sub:lbl()||'QC Pending'},
     {icon:'🏢',val:ents,   label:'Enterprises',sub:'Unique'},
     {icon:'👥',val:teams,  label:'Teams',      sub:'Assigned'},
     {icon:'📸',val:withImg,label:'Has Images', sub:`${total?Math.round(withImg/total*100):0}%`},
