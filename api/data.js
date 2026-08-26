@@ -3,9 +3,10 @@ let vinCache = null, entCache = null, lastFetch = 0;
 // never blocks the others from refreshing or takes the whole dashboard down.
 let lastRowsV1 = null, lastRowsV2 = null, lastRowsV1IM = null, lastEntText = null;
 let staleV1 = false, staleV2 = false, staleV1IM = false;
-// 15 min: a Vercel cron force-refreshes every 5 min, so normal requests always
-// hit a warm cache and never trigger the slow (~50s) Metabase fetch themselves.
-const CACHE_TTL = 15 * 60 * 1000;
+// In-memory TTL: keeps the serverless instance from re-fetching Metabase on
+// every request. 2 min is short enough for near-real-time, long enough to
+// absorb bursts. (Hobby plan can't run sub-daily crons, so no warm cache.)
+const CACHE_TTL = 2 * 60 * 1000;
 
 // ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
 //    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
