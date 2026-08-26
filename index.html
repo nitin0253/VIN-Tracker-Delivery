@@ -1023,7 +1023,7 @@ document.addEventListener('visibilitychange',()=>{
     updateRing();
   }
 });
-function manualRefresh(){clearInterval(_refreshTimer);loadData();}
+function manualRefresh(){clearInterval(_refreshTimer);loadData(true);}
 function showSkeleton(){
   const el=document.getElementById('metrics');
   if(el)el.innerHTML=Array(4).fill('<div class="metric skel" style="height:100px"></div>').join('');
@@ -1082,14 +1082,15 @@ function handleUpload(evt){
   reader.readAsText(file);
 }
 
-async function loadData(){
+async function loadData(bustCache){
   const dashEl=document.getElementById('dash');
   if(dashEl.style.display!=='none')showSkeleton();
   else{document.getElementById('loading').style.display='flex';dashEl.style.display='none';}
   document.getElementById('uf').style.display='none';
   document.getElementById('st-text').textContent='Loading…';
   try{
-    const r=await fetch(API);
+    const url=bustCache?API+'?_t='+Date.now():API;
+    const r=await fetch(url);
     if(!r.ok)throw new Error(`HTTP ${r.status}`);
     const j=await r.json();
     if(j.error)throw new Error(j.error);
