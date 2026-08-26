@@ -1,5 +1,7 @@
 let vinCache = null, entCache = null, lastFetch = 0;
-const CACHE_TTL = 5 * 60 * 1000;
+// 15 min: a Vercel cron force-refreshes every 5 min, so normal requests always
+// hit a warm cache and never trigger the slow (~50s) Metabase fetch themselves.
+const CACHE_TTL = 15 * 60 * 1000;
 
 // ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
 //    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
@@ -217,7 +219,11 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   try {
-    if (req.query.force === '1') { vinCache = null; entCache = null; lastFetch = 0; }
+    // Cron (x-vercel-cron header), ?force=1 or ?warm=1 → refresh the cache in the
+    // background so the slow fetch runs here, not on a user/bot page load.
+    if (req.query.force === '1' || req.query.warm === '1' || req.headers['x-vercel-cron']) {
+      vinCache = null; entCache = null; lastFetch = 0;
+    }
     const { vinCache: rows, entCache: ents } = await buildCache();
     if (req.query.debug === '1') {
       return res.status(200).json({
