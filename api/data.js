@@ -1,4 +1,8 @@
 let vinCache = null, entCache = null, lastFetch = 0;
+// Per-source last-good raw data, so a flaky/slow version (or the enterprise CSV)
+// never blocks the others from refreshing or takes the whole dashboard down.
+let lastRowsV1 = null, lastRowsV2 = null, lastEntText = null;
+let staleV1 = false, staleV2 = false; // true when serving last-good instead of fresh
 // 15 min: a Vercel cron force-refreshes every 5 min, so normal requests always
 // hit a warm cache and never trigger the slow (~50s) Metabase fetch themselves.
 const CACHE_TTL = 15 * 60 * 1000;
@@ -63,6 +67,11 @@ async function fetchCardCsv(cardId) {
     token = await login();
     resp = await doFetch(token);
   }
+  // Transient Metabase 5xx (e.g. a gateway 504 on a slow query) → retry once. The
+  // query often finishes / caches server-side, so the retry can succeed quickly.
+  if (!resp.ok && resp.status >= 500) {
+    resp = await doFetch(token);
+  }
   if (!resp.ok) {
     throw new Error(`VIN card ${cardId} query ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
   }
@@ -107,10 +116,10 @@ async function buildCache() {
   // (avoids two concurrent logins on a cold cache).
   if (!MB_API_KEY && !mbSession) await login();
 
-  // Fetch both VIN questions + the enterprise link in parallel. We REQUIRE both
-  // VIN cards to return data before publishing — a partial (single-version)
-  // result must never overwrite a good, complete snapshot. The v2 query is slow,
-  // so this guards against a timeout/failure silently dropping a whole version.
+  // Fetch both VIN questions + the enterprise link in parallel. Each source keeps
+  // its own last-good copy: a version that fails (e.g. a Metabase gateway 504 on a
+  // slow query) reuses its previous rows while the others still refresh. The
+  // dashboard only errors if we have NOTHING for either version.
   const entPromise = fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
     .then(r => (r.ok ? r.text() : null))
     .catch(() => null);
@@ -120,27 +129,22 @@ async function buildCache() {
   ]);
   const entResult = await entPromise;
 
-  const rowsV2 = resV2.status === 'fulfilled' ? parseCSV(resV2.value) : [];
-  const rowsV1 = resV1.status === 'fulfilled' ? parseCSV(resV1.value) : [];
-  const failV2 = resV2.status !== 'fulfilled' || !rowsV2.length;
-  const failV1 = resV1.status !== 'fulfilled' || !rowsV1.length;
-  if (failV2 || failV1) {
-    const why = [
-      failV2 && `v2=${resV2.status === 'rejected' ? (resV2.reason && resV2.reason.message) : 'empty'}`,
-      failV1 && `v1=${resV1.status === 'rejected' ? (resV1.reason && resV1.reason.message) : 'empty'}`,
-    ].filter(Boolean).join(', ');
-    // Never publish/cache a partial result. Keep serving the last complete
-    // snapshot if we have one; otherwise surface the error (uncached — see handler).
-    if (vinCache) { console.warn(`Incomplete VIN fetch (${why}); keeping previous complete cache.`); return { vinCache, entCache }; }
-    throw new Error(`VIN fetch incomplete — refusing to publish partial data (${why})`);
+  const freshV2 = resV2.status === 'fulfilled' ? parseCSV(resV2.value) : null;
+  const freshV1 = resV1.status === 'fulfilled' ? parseCSV(resV1.value) : null;
+  if (freshV2 && freshV2.length) { freshV2.forEach(r => { r.__version = 'v2'; }); lastRowsV2 = freshV2; staleV2 = false; }
+  else { staleV2 = true; console.warn(`v2 (12497) failed/empty: ${resV2.status === 'rejected' ? (resV2.reason && resV2.reason.message) : 'empty'} — serving last-good v2 (${lastRowsV2 ? lastRowsV2.length : 0} rows)`); }
+  if (freshV1 && freshV1.length) { freshV1.forEach(r => { r.__version = 'v1'; }); lastRowsV1 = freshV1; staleV1 = false; }
+  else { staleV1 = true; console.warn(`v1 (12832) failed/empty: ${resV1.status === 'rejected' ? (resV1.reason && resV1.reason.message) : 'empty'} — serving last-good v1 (${lastRowsV1 ? lastRowsV1.length : 0} rows)`); }
+  if (entResult) lastEntText = entResult;
+
+  if (!lastRowsV1 && !lastRowsV2) {
+    throw new Error(`No VIN data available from either card (v2=${resV2.status}, v1=${resV1.status})`);
   }
-  rowsV2.forEach(r => { r.__version = 'v2'; });
-  rowsV1.forEach(r => { r.__version = 'v1'; });
-  const rawVin = [...rowsV2, ...rowsV1];
+  const rawVin = [...(lastRowsV2 || []), ...(lastRowsV1 || [])];
 
   const entMap = {};
-  if (entResult) {
-    const rawEnt = parseCSV(entResult);
+  if (lastEntText) {
+    const rawEnt = parseCSV(lastEntText);
     rawEnt.forEach(r => {
       const id = pick(r, 'dt.enterprise_id', 'enterprise_id', 'enterpriseId');
       if (id) {
@@ -230,6 +234,7 @@ export default async function handler(req, res) {
         totalVins: rows.length, totalEnts: ents.length,
         byVersion: { v1: rows.filter(r => r.version === 'v1').length,
                      v2: rows.filter(r => r.version === 'v2').length },
+        stale: { v1: staleV1, v2: staleV2 },
         sampleVin: rows[0], sampleEnt: ents[0],
         uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
         uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],
@@ -240,7 +245,7 @@ export default async function handler(req, res) {
         })),
       });
     }
-    res.status(200).json({ rows, ents, total: rows.length, lastSynced: new Date(lastFetch).toISOString() });
+    res.status(200).json({ rows, ents, total: rows.length, stale: { v1: staleV1, v2: staleV2 }, lastSynced: new Date(lastFetch).toISOString() });
   } catch (err) {
     // Errors must not be cached by the CDN — otherwise a single failed refresh
     // would be served for the whole s-maxage window instead of retrying.
