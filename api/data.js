@@ -1,8 +1,8 @@
 let vinCache = null, entCache = null, lastFetch = 0;
 // Per-source last-good raw data, so a flaky/slow version (or the enterprise CSV)
 // never blocks the others from refreshing or takes the whole dashboard down.
-let lastRowsV1 = null, lastRowsV2 = null, lastEntText = null;
-let staleV1 = false, staleV2 = false; // true when serving last-good instead of fresh
+let lastRowsV1 = null, lastRowsV2 = null, lastRowsV1IM = null, lastEntText = null;
+let staleV1 = false, staleV2 = false, staleV1IM = false;
 // 15 min: a Vercel cron force-refreshes every 5 min, so normal requests always
 // hit a warm cache and never trigger the slow (~50s) Metabase fetch themselves.
 const CACHE_TTL = 15 * 60 * 1000;
@@ -10,10 +10,11 @@ const CACHE_TTL = 15 * 60 * 1000;
 // ── Config (set these in the Vercel dashboard → Settings → Environment Variables,
 //    or in a local .env for `vercel dev`). NEVER commit real credentials. ──────────
 const MB = (process.env.METABASE_URL || 'https://metabase.spyne.ai').replace(/\/+$/, '');
-// Two "VIN tracker" questions with identical columns — v2 (12497) and v1 (12832).
-// The dashboard merges both. VIN_CARD_ID (legacy) still works as the v2 id.
-const VIN_CARD_ID_V2 = process.env.VIN_CARD_ID_V2 || process.env.VIN_CARD_ID || '12497';
-const VIN_CARD_ID_V1 = process.env.VIN_CARD_ID_V1 || '12832';
+// Three "VIN tracker" questions with identical columns:
+//   v2 (12497), v1 (12832), v1-IM (12947 — Instamotion + Carvago2, split for volume).
+const VIN_CARD_ID_V2    = process.env.VIN_CARD_ID_V2 || process.env.VIN_CARD_ID || '12497';
+const VIN_CARD_ID_V1    = process.env.VIN_CARD_ID_V1 || '12832';
+const VIN_CARD_ID_V1_IM = process.env.VIN_CARD_ID_V1_IM || '12947';
 const MB_USER     = process.env.METABASE_USER || '';
 const MB_PASS     = process.env.METABASE_PASSWORD || '';
 const MB_API_KEY  = process.env.METABASE_API_KEY || '';           // optional alternative to user/pass
@@ -112,35 +113,36 @@ async function buildCache() {
   if (vinCache && Date.now() - lastFetch < CACHE_TTL) return { vinCache, entCache };
   const now = Date.now();
 
-  // Log in once up front so the two parallel VIN fetches share a single session
-  // (avoids two concurrent logins on a cold cache).
+  // Log in once up front so the parallel VIN fetches share a single session.
   if (!MB_API_KEY && !mbSession) await login();
 
-  // Fetch both VIN questions + the enterprise link in parallel. Each source keeps
-  // its own last-good copy: a version that fails (e.g. a Metabase gateway 504 on a
-  // slow query) reuses its previous rows while the others still refresh. The
-  // dashboard only errors if we have NOTHING for either version.
+  // Fetch all three VIN questions + enterprise CSV in parallel. Each source keeps
+  // its own last-good copy so one failing source doesn't block the others.
   const entPromise = fetch(ENT_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } })
     .then(r => (r.ok ? r.text() : null))
     .catch(() => null);
-  const [resV2, resV1] = await Promise.allSettled([
+  const [resV2, resV1, resV1IM] = await Promise.allSettled([
     fetchCardCsv(VIN_CARD_ID_V2),
     fetchCardCsv(VIN_CARD_ID_V1),
+    fetchCardCsv(VIN_CARD_ID_V1_IM),
   ]);
   const entResult = await entPromise;
 
-  const freshV2 = resV2.status === 'fulfilled' ? parseCSV(resV2.value) : null;
-  const freshV1 = resV1.status === 'fulfilled' ? parseCSV(resV1.value) : null;
-  if (freshV2 && freshV2.length) { freshV2.forEach(r => { r.__version = 'v2'; }); lastRowsV2 = freshV2; staleV2 = false; }
-  else { staleV2 = true; console.warn(`v2 (12497) failed/empty: ${resV2.status === 'rejected' ? (resV2.reason && resV2.reason.message) : 'empty'} — serving last-good v2 (${lastRowsV2 ? lastRowsV2.length : 0} rows)`); }
-  if (freshV1 && freshV1.length) { freshV1.forEach(r => { r.__version = 'v1'; }); lastRowsV1 = freshV1; staleV1 = false; }
-  else { staleV1 = true; console.warn(`v1 (12832) failed/empty: ${resV1.status === 'rejected' ? (resV1.reason && resV1.reason.message) : 'empty'} — serving last-good v1 (${lastRowsV1 ? lastRowsV1.length : 0} rows)`); }
+  const freshV2   = resV2.status   === 'fulfilled' ? parseCSV(resV2.value)   : null;
+  const freshV1   = resV1.status   === 'fulfilled' ? parseCSV(resV1.value)   : null;
+  const freshV1IM = resV1IM.status === 'fulfilled' ? parseCSV(resV1IM.value) : null;
+  if (freshV2 && freshV2.length)     { freshV2.forEach(r   => { r.__version = 'v2'; }); lastRowsV2   = freshV2;   staleV2   = false; }
+  else { staleV2   = true; console.warn(`v2 (${VIN_CARD_ID_V2}) failed/empty — serving last-good (${lastRowsV2 ? lastRowsV2.length : 0} rows)`); }
+  if (freshV1 && freshV1.length)     { freshV1.forEach(r   => { r.__version = 'v1'; }); lastRowsV1   = freshV1;   staleV1   = false; }
+  else { staleV1   = true; console.warn(`v1 (${VIN_CARD_ID_V1}) failed/empty — serving last-good (${lastRowsV1 ? lastRowsV1.length : 0} rows)`); }
+  if (freshV1IM && freshV1IM.length) { freshV1IM.forEach(r => { r.__version = 'v1'; }); lastRowsV1IM = freshV1IM; staleV1IM = false; }
+  else { staleV1IM = true; console.warn(`v1-IM (${VIN_CARD_ID_V1_IM}) failed/empty — serving last-good (${lastRowsV1IM ? lastRowsV1IM.length : 0} rows)`); }
   if (entResult) lastEntText = entResult;
 
-  if (!lastRowsV1 && !lastRowsV2) {
-    throw new Error(`No VIN data available from either card (v2=${resV2.status}, v1=${resV1.status})`);
+  if (!lastRowsV1 && !lastRowsV2 && !lastRowsV1IM) {
+    throw new Error(`No VIN data available from any card (v2=${resV2.status}, v1=${resV1.status}, v1IM=${resV1IM.status})`);
   }
-  const rawVin = [...(lastRowsV2 || []), ...(lastRowsV1 || [])];
+  const rawVin = [...(lastRowsV2 || []), ...(lastRowsV1 || []), ...(lastRowsV1IM || [])];
 
   const entMap = {};
   if (lastEntText) {
@@ -234,7 +236,7 @@ export default async function handler(req, res) {
         totalVins: rows.length, totalEnts: ents.length,
         byVersion: { v1: rows.filter(r => r.version === 'v1').length,
                      v2: rows.filter(r => r.version === 'v2').length },
-        stale: { v1: staleV1, v2: staleV2 },
+        stale: { v1: staleV1, v2: staleV2, v1IM: staleV1IM },
         sampleVin: rows[0], sampleEnt: ents[0],
         uniqueRB:              [...new Set(rows.map(r => r.rb).filter(Boolean))],
         uniqueType:            [...new Set(rows.map(r => r.type).filter(Boolean))],
@@ -245,7 +247,7 @@ export default async function handler(req, res) {
         })),
       });
     }
-    res.status(200).json({ rows, ents, total: rows.length, stale: { v1: staleV1, v2: staleV2 }, lastSynced: new Date(lastFetch).toISOString() });
+    res.status(200).json({ rows, ents, total: rows.length, stale: { v1: staleV1, v2: staleV2, v1IM: staleV1IM }, lastSynced: new Date(lastFetch).toISOString() });
   } catch (err) {
     // Errors must not be cached by the CDN — otherwise a single failed refresh
     // would be served for the whole s-maxage window instead of retrying.
